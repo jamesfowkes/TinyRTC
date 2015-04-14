@@ -10,7 +10,6 @@
 #define ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, rtn) { if (!parser->m_success) { return rtn; }}
 
 #define MAX_NODE_NUMBER (128)
-#define MAX_FUNCTIONS (16)
 
 static ASTNode* Expression(Parser * parser);
 static ASTNode* Expression1(Parser * parser);
@@ -20,17 +19,15 @@ static ASTNode* Factor(Parser * parser);
 static void Match(Parser * parser, char expected);
 static void SkipWhitespaces(Parser * parser);
 static void GetNextToken(Parser * parser);
-static bool GetBoolean(Parser * parser);
+static double GetNumber(Parser * parser);
 static ASTNode* CreateNode(Parser * parser, ASTNodeType type, ASTNode* left, ASTNode* right);
 static ASTNode* CreateUnaryNode(Parser * parser, ASTNode* left);
-static ASTNode* CreateNodeBool(Parser * parser, bool value);
+static ASTNode* CreateNodeNumber(Parser * parser, double value);
 static ASTNode* GetNextFreeNode(Parser * parser);
-static bool EvaluateSubtree(ASTNode* ast);
+static double EvaluateSubtree(ASTNode* ast);
 
 static ASTNode s_freeNodes[MAX_NODE_NUMBER];
 static uint8_t s_freeNodeIndex = 0;
-
-static BOOLFUNCTION s_functions[MAX_FUNCTIONS];
 
 static ASTNode* Expression(Parser * parser)
 {
@@ -38,7 +35,7 @@ static ASTNode* Expression(Parser * parser)
     ASTNode* tnode = Term(parser);
     ASTNode* e1node = Expression1(parser);
 
-    return CreateNode(parser, OperatorOr, tnode, e1node);
+    return CreateNode(parser, OperatorPlus, tnode, e1node);
 }
 
 static ASTNode* Expression1(Parser * parser)
@@ -49,22 +46,22 @@ static ASTNode* Expression1(Parser * parser)
     ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
     switch(parser->m_crtToken.Type)
     {
-        case And:
+        case Plus:
         GetNextToken(parser);
         tnode = Term(parser);
         e1node = Expression1(parser);
-        return CreateNode(parser, OperatorAnd, e1node, tnode);
+        return CreateNode(parser, OperatorPlus, e1node, tnode);
         break;
 
-        case Or:
+        case Minus:
         GetNextToken(parser);
         tnode = Term(parser);
         e1node = Expression1(parser);
-        return CreateNode(parser, OperatorOr, e1node, tnode);
+        return CreateNode(parser, OperatorMinus, e1node, tnode);
         break;
     }
 
-    return CreateNodeBool(parser, 0);
+    return CreateNodeNumber(parser, 0);
 }
 
 static ASTNode* Term(Parser * parser)
@@ -99,7 +96,7 @@ static ASTNode* Term1(Parser * parser)
         break;
     }
 
-    return CreateNodeBool(parser, 1);
+    return CreateNodeNumber(parser, 1);
 }
 
 static ASTNode* Factor(Parser * parser)
@@ -116,15 +113,15 @@ static ASTNode* Factor(Parser * parser)
             Match(parser, ')');
             return node;
 
-        case Not:
+        case Minus:
             GetNextToken(parser);
             node = Factor(parser);
             return CreateUnaryNode(parser, node);
 
-        case ID:
+        case Number:
             value = parser->m_crtToken.Value;
             GetNextToken(parser);
-            return CreateNodeBool(parser, value);
+            return CreateNodeNumber(parser, value);
 
         default:
             parser->m_success = false;
@@ -153,7 +150,7 @@ static ASTNode* CreateUnaryNode(Parser * parser, ASTNode* left)
 
     if (node)
     {
-        node->Type = UnaryNot;
+        node->Type = UnaryMinus;
         node->Left = left;
         node->Right = NULL;
     }
@@ -161,13 +158,13 @@ static ASTNode* CreateUnaryNode(Parser * parser, ASTNode* left)
     return node;
 }
 
-static ASTNode* CreateNodeBool(Parser * parser, bool value)
+static ASTNode* CreateNodeNumber(Parser * parser, double value)
 {
     ASTNode* node = GetNextFreeNode(parser);
     
     if (node)
     {
-        node->Type = FunctionID;
+        node->Type = NumberValue;
         node->Value = value;
     }
 
@@ -231,8 +228,8 @@ static void GetNextToken(Parser * parser)
     // if the current character is a digit read a number
     if(isdigit(parser->m_Text[parser->m_Index]))
     {
-        parser->m_crtToken.Type = ID;
-        parser->m_crtToken.Value = GetBoolean(parser);
+        parser->m_crtToken.Type = Number;
+        parser->m_crtToken.Value = GetNumber(parser);
         return;
     }
 
@@ -241,8 +238,10 @@ static void GetNextToken(Parser * parser)
     // check if the current character is an operator or parentheses
     switch(parser->m_Text[parser->m_Index])
     {
-        case '&': parser->m_crtToken.Type = And; break;
-        case '|': parser->m_crtToken.Type = Or; break;
+        case '+': parser->m_crtToken.Type = Plus; break;
+        case '-': parser->m_crtToken.Type = Minus; break;
+        case '*': parser->m_crtToken.Type = Mul; break;
+        case '/': parser->m_crtToken.Type = Div; break;
         case '(': parser->m_crtToken.Type = OpenParenthesis; break;
         case ')': parser->m_crtToken.Type = ClosedParenthesis; break;
     }
@@ -259,54 +258,60 @@ static void GetNextToken(Parser * parser)
     }
 }
 
-static bool GetBoolean(Parser * parser)
+static double GetNumber(Parser * parser)
 {
-    ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, false);
+    ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, 0.0);
 
     SkipWhitespaces(parser);
 
-    switch(parser->m_Text[parser->m_Index])
+    int index = parser->m_Index;
+    while(isdigit(parser->m_Text[parser->m_Index])) parser->m_Index++;
+    if(parser->m_Text[parser->m_Index] == '.') parser->m_Index++;
+    while(isdigit(parser->m_Text[parser->m_Index])) parser->m_Index++;
+
+    if(parser->m_Index - index == 0)
     {
-        case 'T':
-            return true;
-        case 'F':
-            return false;
-        default:
-            parser->m_success = false;
-            sprintf(parser->m_errorMessage, "T or F expected but not found at position %d!", parser->m_Index);   
-            return false;
+        sprintf(parser->m_errorMessage, "Number expected but not found at position %d!", parser->m_Index);   
     }
+     
+
+    char buffer[32] = {0};
+    memcpy(buffer, &parser->m_Text[index], parser->m_Index - index);
+
+    return atof(buffer);
 }
 
-static bool EvaluateSubtree(ASTNode* ast)
+static double EvaluateSubtree(ASTNode* ast)
 {
-    if(ast == NULL) { return false; }
+    if(ast == NULL) { return 0.0; }
 
-    if(ast->Type == FunctionID)
+    if(ast->Type == NumberValue)
     {
         return ast->Value;
     }
-    else if(ast->Type == UnaryNot)
+    else if(ast->Type == UnaryMinus)
     {
-        return !EvaluateSubtree(ast->Left);
+        return -EvaluateSubtree(ast->Left);
     }
     else 
     {
-        bool v1 = EvaluateSubtree(ast->Left);
-        bool v2 = EvaluateSubtree(ast->Right);
+        double v1 = EvaluateSubtree(ast->Left);
+        double v2 = EvaluateSubtree(ast->Right);
         switch(ast->Type)
         {
-            case OperatorAnd:  return v1 && v2;
-            case OperatorOr: return v1 || v2;
+            case OperatorPlus:  return v1 + v2;
+            case OperatorMinus: return v1 - v2;
+            case OperatorMul:   return v1 * v2;
+            case OperatorDiv:   return v1 / v2;
         }
     }
 
-    return false;
+    return 0.0;
 }
 
-bool Evaluate(ASTNode* ast)
+double Evaluate(ASTNode* ast)
 {
-    if(ast == NULL) { return false; }
+    if(ast == NULL) { return 0.0; }
     
     return EvaluateSubtree(ast);
 }

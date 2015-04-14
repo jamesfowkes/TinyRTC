@@ -1,13 +1,14 @@
 enum TokenType 
 {
    Error,
-   And,
-   Or,
-   Not,
+   Plus,
+   Minus,
+   Mul,
+   Div,
    EndOfText,
    OpenParenthesis,
    ClosedParenthesis,
-   ID
+   Number
 };
  
 struct Token 
@@ -29,20 +30,20 @@ struct Parser
 enum ASTNodeType 
 {
    Undefined,
-   OperatorAnd,
-   OperatorOr,
-   UnaryNot,
-   FunctionID
+   OperatorPlus,
+   OperatorMinus,
+   OperatorMul,
+   OperatorDiv,
+   UnaryMinus,
+   NumberValue
 };
 
 struct ASTNode
 {
    ASTNodeType Type;
-   bool      Value;
+   double      Value;
    ASTNode*    Left;
    ASTNode*    Right;
 };
-
-typedef bool (*BOOLFUNCTION)(void);
 
 void Parse(Parser * parser, const char* text);
