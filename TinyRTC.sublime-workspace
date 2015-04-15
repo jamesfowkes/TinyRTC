@@ -112,10 +112,10 @@
 	"buffers":
 	[
 		{
-			"file": ".gitignore",
+			"file": "messaging.c",
 			"settings":
 			{
-				"buffer_size": 844,
+				"buffer_size": 2898,
 				"line_ending": "Windows"
 			}
 		}
@@ -144,12 +144,16 @@
 	},
 	"file_history":
 	[
-		"/C/GitHub/TinyRTC/syntax_parser_old.c",
-		"/C/GitHub/TinyRTC/syntax_parser.test.new.cpp",
-		"/C/GitHub/TinyRTC/syntax_parser.h",
 		"/C/GitHub/TinyRTC/syntax_parser.c",
-		"/C/GitHub/TinyRTC/syntax_parser.test.old.cpp",
+		"/C/GitHub/TinyRTC/ast_node.h",
+		"/C/GitHub/TinyRTC/ast_node.c",
+		"/C/GitHub/TinyRTC/makefile",
+		"/C/GitHub/TinyRTC/syntax_parser.h",
 		"/C/GitHub/TinyRTC/syntax_parser.test.cpp",
+		"/C/GitHub/TinyRTC/syntax_parser.test.new.cpp",
+		"/C/GitHub/TinyRTC/.gitignore",
+		"/C/GitHub/TinyRTC/syntax_parser_old.c",
+		"/C/GitHub/TinyRTC/syntax_parser.test.old.cpp",
 		"/C/GitHub/TinyRTC/syntax_parser_old.h",
 		"/C/GitHub/DataLogger/libraries/DLTest/Test/DLTest.Mock.LocalStorage.Test.cpp",
 		"/C/GitHub/TinyRTC/messaging.c",
@@ -217,7 +221,7 @@
 	},
 	"find_in_files":
 	{
-		"height": 0.0,
+		"height": 93.0,
 		"where_history":
 		[
 			"-env/",
@@ -231,6 +235,26 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"OperatorOr",
+			"Factor",
+			"Term",
+			"Expression",
+			"Match",
+			"SkipWhitespaces",
+			"GetNextToken",
+			"EvaluateSubtree",
+			"GetNextFreeNode",
+			"createnode",
+			"left",
+			"MAX_NODE_NUMBER",
+			"OpenParenthesis",
+			"Match",
+			"m_crtToken.Symbol",
+			"LogicExpParser_",
+			"defaultF",
+			"DEBUG(",
+			"CreateNode",
+			"DEBUG",
 			"T",
 			"t",
 			"T",
@@ -338,16 +362,7 @@
 			"GPS_DATA",
 			"GPS_parseGPRMCSentence",
 			"Location_GetGPSTime",
-			"GPS_parseGPRMCSentence",
-			"dllocation.gps",
-			"fileExists",
-			"FileExists",
-			"EndOfFile",
-			"endOfFile",
-			"ReadLineWithReadFunction",
-			"readOneByteFromFile",
-			"FileExists",
-			"print"
+			"GPS_parseGPRMCSentence"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -371,26 +386,28 @@
 			[
 				{
 					"buffer": 0,
-					"file": ".gitignore",
+					"file": "messaging.c",
 					"settings":
 					{
-						"buffer_size": 844,
+						"buffer_size": 2898,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								230,
-								230
+								2441,
+								2441
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/Text/Plain text.tmLanguage"
+							"syntax": "Packages/User/Stino/Arduino.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 228.0,
+						"translation.y": 912.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
