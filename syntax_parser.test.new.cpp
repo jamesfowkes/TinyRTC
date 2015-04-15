@@ -25,7 +25,7 @@ void TestForParseSuccess(void)
 {
    Parser parser;
    ASTNode * pNode = Parse(&parser, s_pToTest);
-   TEST_ASSERT_TRUE(parser.m_success);
+   TEST_ASSERT_TRUE_MESSAGE(parser.m_success, parser.m_errorMessage);
 
    bool actual = Evaluate(pNode);
    TEST_ASSERT_EQUAL(s_expected, actual);
@@ -42,21 +42,80 @@ int main()
 {
    UnityBegin("syntax_parser_new.test.cpp");
 
+   Parser_Init();
+
    RegisterFunction(0, fFalse);
    RegisterFunction(1, fTrue);
 
-   RUN_SUCCESS_TEST("1", true);
+   RUN_SUCCESS_TEST("F", false);
+   RUN_SUCCESS_TEST("T", true);
    RUN_SUCCESS_TEST("0", false);
+   RUN_SUCCESS_TEST("1", true);
+
+   RUN_SUCCESS_TEST("0|0", false);
    RUN_SUCCESS_TEST("0|1", true);
+   RUN_SUCCESS_TEST("1|0", true);
+   RUN_SUCCESS_TEST("1|1", true);
+  
+   RUN_SUCCESS_TEST("0&0", false);
    RUN_SUCCESS_TEST("0&1", false);
-   RUN_SUCCESS_TEST("0|1&1|0", true);
-   RUN_SUCCESS_TEST("0|1|0|1", true);
-   RUN_SUCCESS_TEST("(0&1)|(0&1)", false);
-   RUN_SUCCESS_TEST("(0|1)|(0|1)", true);
-   RUN_SUCCESS_TEST("1&(2|3)|(4&5)", 55.0f);
-   RUN_SUCCESS_TEST("1", 125.0f);
-   RUN_SUCCESS_TEST("!1", -1.0f);
-   RUN_SUCCESS_TEST("!1&(!2)", -3.0f);
+   RUN_SUCCESS_TEST("1&0", false);
+   RUN_SUCCESS_TEST("1&1", true);
+
+   RUN_SUCCESS_TEST("F|F", false);
+   RUN_SUCCESS_TEST("F|T", true);
+   RUN_SUCCESS_TEST("T|F", true);
+   RUN_SUCCESS_TEST("T|T", true);
+  
+   RUN_SUCCESS_TEST("F&F", false);
+   RUN_SUCCESS_TEST("F&T", false);
+   RUN_SUCCESS_TEST("T&F", false);
+   RUN_SUCCESS_TEST("T&T", true);
+
+   RUN_SUCCESS_TEST("0|T", true);
+   RUN_SUCCESS_TEST("0|F", false);
+   RUN_SUCCESS_TEST("1|T", true);
+   RUN_SUCCESS_TEST("1|F", true);
+   RUN_SUCCESS_TEST("0&T", false);
+   RUN_SUCCESS_TEST("0&F", false);
+   RUN_SUCCESS_TEST("1&T", true);
+   RUN_SUCCESS_TEST("1&F", false);
+
+   RUN_SUCCESS_TEST("!F", true);
+   RUN_SUCCESS_TEST("!T", false);
+
+   RUN_SUCCESS_TEST("!0", true);
+   RUN_SUCCESS_TEST("!1", false);
+
+   RUN_SUCCESS_TEST("!0|0", true);
+   RUN_SUCCESS_TEST("!0|1", true);
+   RUN_SUCCESS_TEST("!1|0", false);
+   RUN_SUCCESS_TEST("!1|1", true);
+
+   RUN_SUCCESS_TEST("!0&0", false);
+   RUN_SUCCESS_TEST("!0&1", true);
+   RUN_SUCCESS_TEST("!1&0", false);
+   RUN_SUCCESS_TEST("!1&1", false);
+
+   RUN_SUCCESS_TEST("!F|F", true);
+   RUN_SUCCESS_TEST("!F|T", true);
+   RUN_SUCCESS_TEST("!T|F", false);
+   RUN_SUCCESS_TEST("!T|T", true);
+
+   RUN_SUCCESS_TEST("!F&F", false);
+   RUN_SUCCESS_TEST("!F&T", true);
+   RUN_SUCCESS_TEST("!T&F", false);
+   RUN_SUCCESS_TEST("!T&T", false);
+
+   RUN_SUCCESS_TEST("(0)", false);
+   RUN_SUCCESS_TEST("(1)", true);
+
+   RUN_SUCCESS_TEST("(F)", false);
+   RUN_SUCCESS_TEST("(T)", true);
+
+   RUN_SUCCESS_TEST("(1)&(0|1)", true);
+   RUN_SUCCESS_TEST("(1)|(0&1)", true);
+   RUN_SUCCESS_TEST("(0)|(0&1)", false);
 
    RUN_FAILURE_TEST("   1|2,5");
    RUN_FAILURE_TEST("   1|2.5e2");

@@ -7,14 +7,15 @@ enum TokenType
    EndOfText,
    OpenParenthesis,
    ClosedParenthesis,
-   ID
+   Number,
+   BoolChar
 };
 
 struct Token
 {
-   TokenType    Type;
-   double       Value;
-   char     Symbol;
+   TokenType  Type;
+   uint8_t    Value;
+   char       Symbol;
 };
 
 struct Parser
@@ -32,7 +33,8 @@ enum ASTNodeType
    OperatorAnd,
    OperatorOr,
    UnaryNot,
-   FunctionID
+   FunctionID,
+   BoolValue
 };
 
 struct ASTNode
@@ -45,6 +47,7 @@ struct ASTNode
 
 typedef bool (*BOOLFUNCTION)(void);
 
+void Parser_Init(void);
 bool Evaluate(ASTNode* ast);
 ASTNode * Parse(Parser * parser, const char* text);
 void RegisterFunction(uint8_t fid, BOOLFUNCTION fn);

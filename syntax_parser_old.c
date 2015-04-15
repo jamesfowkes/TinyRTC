@@ -31,6 +31,7 @@ static uint8_t s_freeNodeIndex = 0;
 
 static ASTNode* Expression(Parser * parser)
 {
+    printf("%s\n", __func__);
     ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
     ASTNode* tnode = Term(parser);
     ASTNode* e1node = Expression1(parser);
@@ -40,6 +41,7 @@ static ASTNode* Expression(Parser * parser)
 
 static ASTNode* Expression1(Parser * parser)
 {
+    printf("%s\n", __func__);
     ASTNode* tnode;
     ASTNode* e1node;
 
@@ -66,6 +68,7 @@ static ASTNode* Expression1(Parser * parser)
 
 static ASTNode* Term(Parser * parser)
 {
+    printf("%s\n", __func__);
     ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
     ASTNode* fnode = Factor(parser);
     ASTNode* t1node = Term1(parser);
@@ -75,6 +78,7 @@ static ASTNode* Term(Parser * parser)
 
 static ASTNode* Term1(Parser * parser)
 {
+    printf("%s\n", __func__);
     ASTNode* fnode;
     ASTNode* t1node;
 
@@ -101,6 +105,7 @@ static ASTNode* Term1(Parser * parser)
 
 static ASTNode* Factor(Parser * parser)
 {
+    printf("%s\n", __func__);
     ASTNode* node;
     double value;
 
@@ -132,6 +137,7 @@ static ASTNode* Factor(Parser * parser)
 
 static ASTNode* CreateNode(Parser * parser, ASTNodeType type, ASTNode* left, ASTNode* right)
 {
+    printf("%s\n", __func__);
     ASTNode* node = GetNextFreeNode(parser);
 
     if (node)
@@ -146,6 +152,7 @@ static ASTNode* CreateNode(Parser * parser, ASTNodeType type, ASTNode* left, AST
 
 static ASTNode* CreateUnaryNode(Parser * parser, ASTNode* left)
 {
+    printf("%s\n", __func__);    
     ASTNode* node = GetNextFreeNode(parser);
 
     if (node)
@@ -160,6 +167,7 @@ static ASTNode* CreateUnaryNode(Parser * parser, ASTNode* left)
 
 static ASTNode* CreateNodeNumber(Parser * parser, double value)
 {
+    printf("%s\n", __func__);    
     ASTNode* node = GetNextFreeNode(parser);
 
     if (node)
@@ -190,6 +198,7 @@ static ASTNode* GetNextFreeNode(Parser * parser)
 
 static void Match(Parser * parser, char expected)
 {
+    printf("%s\n", __func__);    
     ON_PARSER_ERROR_EXIT_EARLY(parser);
     if(parser->m_Text[parser->m_Index-1] == expected)
     {
