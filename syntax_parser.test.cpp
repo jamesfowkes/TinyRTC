@@ -3,6 +3,7 @@
 
 #include <iostream>
 
+#include "ast_node.h"
 #include "syntax_parser.h"
 #include "unity.h"
 
@@ -24,28 +25,28 @@ static bool fFalse(void) { return false; }
 void TestForParseSuccess(void)
 {
    Parser parser;
-   ASTNode * pNode = Parse(&parser, s_pToTest);
+   ASTNode * pNode = LEP_Parse(&parser, s_pToTest);
    TEST_ASSERT_TRUE_MESSAGE(parser.m_success, parser.m_errorMessage);
 
-   bool actual = Evaluate(pNode);
+   bool actual = LEP_Evaluate(pNode);
    TEST_ASSERT_EQUAL(s_expected, actual);
 }
 
 void TestForParseFailure(void)
 {
    Parser parser;
-   Parse(&parser, s_pToTest);
+   LEP_Parse(&parser, s_pToTest);
    TEST_ASSERT_FALSE(parser.m_success);
 }
 
 int main()
 {
-   UnityBegin("syntax_parser_new.test.cpp");
+   UnityBegin("syntax_parser.test.cpp");
 
-   Parser_Init();
+   LEP_Init();
 
-   RegisterFunction(0, fFalse);
-   RegisterFunction(1, fTrue);
+   LEP_RegisterFunction(0, fFalse);
+   LEP_RegisterFunction(1, fTrue);
 
    RUN_SUCCESS_TEST("F", false);
    RUN_SUCCESS_TEST("T", true);

@@ -4,6 +4,26 @@
 		"selected_items":
 		[
 			[
+				"Boo",
+				"BoolChar"
+			],
+			[
+				"res",
+				"result"
+			],
+			[
+				"MAX_",
+				"MAX_FUNCTIONS"
+			],
+			[
+				"defa",
+				"defaultFn"
+			],
+			[
+				"MAX",
+				"MAX_FUNCTIONS"
+			],
+			[
 				"m_",
 				"m_Text"
 			],
@@ -92,36 +112,10 @@
 	"buffers":
 	[
 		{
-			"file": "syntax_parser.test.cpp",
+			"file": ".gitignore",
 			"settings":
 			{
-				"buffer_size": 1361,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "syntax_parser.c",
-			"settings":
-			{
-				"buffer_size": 8108,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"contents": "Searching 13 files for \"double\"\n\nC:\\GitHub\\TinyRTC\\.gitignore:\n   37  \n   38  .DS_Store\n   39: .AppleDouble\n   40  .LSOverride\n   41  \n\nC:\\GitHub\\TinyRTC\\syntax_parser.c:\n   21  static void SkipWhitespaces(Parser * parser);\n   22  static void GetNextToken(Parser * parser);\n   23: static double GetNumber(Parser * parser);\n   24  static ASTNode* CreateNode(Parser * parser, ASTNodeType type, ASTNode* left, ASTNode* right);\n   25  static ASTNode* CreateUnaryNode(Parser * parser, ASTNode* left);\n   26: static ASTNode* CreateNodeBool(Parser * parser, double value);\n   27  static ASTNode* GetNextFreeNode(Parser * parser);\n   28  static bool EvaluateSubtree(ASTNode* ast);\n   ..\n  106  {\n  107      ASTNode* node;\n  108:     double value;\n  109  \n  110      ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);\n\nC:\\GitHub\\TinyRTC\\syntax_parser.h:\n   14  {\n   15     TokenType    Type;\n   16:    double       Value;\n   17     char     Symbol;\n   18  };\n\nC:\\GitHub\\TinyRTC\\syntax_parser_old.c:\n   20  static void SkipWhitespaces(Parser * parser);\n   21  static void GetNextToken(Parser * parser);\n   22: static double GetNumber(Parser * parser);\n   23  static ASTNode* CreateNode(Parser * parser, ASTNodeType type, ASTNode* left, ASTNode* right);\n   24  static ASTNode* CreateUnaryNode(Parser * parser, ASTNode* left);\n   25: static ASTNode* CreateNodeNumber(Parser * parser, double value);\n   26  static ASTNode* GetNextFreeNode(Parser * parser);\n   27: static double EvaluateSubtree(ASTNode* ast);\n   28  \n   29  static ASTNode s_freeNodes[MAX_NODE_NUMBER];\n   ..\n  103  {\n  104      ASTNode* node;\n  105:     double value;\n  106  \n  107      ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);\n  ...\n  159  }\n  160  \n  161: static ASTNode* CreateNodeNumber(Parser * parser, double value)\n  162  {\n  163      ASTNode* node = GetNextFreeNode(parser);\n  ...\n  259  }\n  260  \n  261: static double GetNumber(Parser * parser)\n  262  {\n  263      ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, 0.0);\n  ...\n  282  }\n  283  \n  284: static double EvaluateSubtree(ASTNode* ast)\n  285  {\n  286      if(ast == NULL) { return 0.0; }\n  ...\n  296      else \n  297      {\n  298:         double v1 = EvaluateSubtree(ast->Left);\n  299:         double v2 = EvaluateSubtree(ast->Right);\n  300          switch(ast->Type)\n  301          {\n  ...\n  310  }\n  311  \n  312: double Evaluate(ASTNode* ast)\n  313  {\n  314      if(ast == NULL) { return 0.0; }\n\nC:\\GitHub\\TinyRTC\\syntax_parser_old.h:\n   15  {\n   16     TokenType    Type;\n   17:    double       Value;\n   18     char     Symbol;\n   19  };\n   ..\n   42  {\n   43     ASTNodeType Type;\n   44:    double      Value;\n   45     ASTNode*    Left;\n   46     ASTNode*    Right;\n\n17 matches across 5 files\n\n\nSearching 13 files for \"double\"\n\nC:\\GitHub\\TinyRTC\\.gitignore:\n   37  \n   38  .DS_Store\n   39: .AppleDouble\n   40  .LSOverride\n   41  \n\nC:\\GitHub\\TinyRTC\\syntax_parser.c:\n   21  static void SkipWhitespaces(Parser * parser);\n   22  static void GetNextToken(Parser * parser);\n   23: static double GetNumber(Parser * parser);\n   24  static ASTNode* CreateNode(Parser * parser, ASTNodeType type, ASTNode* left, ASTNode* right);\n   25  static ASTNode* CreateUnaryNode(Parser * parser, ASTNode* left);\n   26: static ASTNode* CreateNodeBool(Parser * parser, double value);\n   27  static ASTNode* GetNextFreeNode(Parser * parser);\n   28  static bool EvaluateSubtree(ASTNode* ast);\n   ..\n  106  {\n  107      ASTNode* node;\n  108:     double value;\n  109  \n  110      ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);\n\nC:\\GitHub\\TinyRTC\\syntax_parser.h:\n   14  {\n   15     TokenType    Type;\n   16:    double       Value;\n   17     char     Symbol;\n   18  };\n\nC:\\GitHub\\TinyRTC\\syntax_parser_old.c:\n   20  static void SkipWhitespaces(Parser * parser);\n   21  static void GetNextToken(Parser * parser);\n   22: static double GetNumber(Parser * parser);\n   23  static ASTNode* CreateNode(Parser * parser, ASTNodeType type, ASTNode* left, ASTNode* right);\n   24  static ASTNode* CreateUnaryNode(Parser * parser, ASTNode* left);\n   25: static ASTNode* CreateNodeNumber(Parser * parser, double value);\n   26  static ASTNode* GetNextFreeNode(Parser * parser);\n   27: static double EvaluateSubtree(ASTNode* ast);\n   28  \n   29  static ASTNode s_freeNodes[MAX_NODE_NUMBER];\n   ..\n  103  {\n  104      ASTNode* node;\n  105:     double value;\n  106  \n  107      ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);\n  ...\n  159  }\n  160  \n  161: static ASTNode* CreateNodeNumber(Parser * parser, double value)\n  162  {\n  163      ASTNode* node = GetNextFreeNode(parser);\n  ...\n  259  }\n  260  \n  261: static double GetNumber(Parser * parser)\n  262  {\n  263      ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, 0.0);\n  ...\n  282  }\n  283  \n  284: static double EvaluateSubtree(ASTNode* ast)\n  285  {\n  286      if(ast == NULL) { return 0.0; }\n  ...\n  296      else \n  297      {\n  298:         double v1 = EvaluateSubtree(ast->Left);\n  299:         double v2 = EvaluateSubtree(ast->Right);\n  300          switch(ast->Type)\n  301          {\n  ...\n  310  }\n  311  \n  312: double Evaluate(ASTNode* ast)\n  313  {\n  314      if(ast == NULL) { return 0.0; }\n\nC:\\GitHub\\TinyRTC\\syntax_parser_old.h:\n   15  {\n   16     TokenType    Type;\n   17:    double       Value;\n   18     char     Symbol;\n   19  };\n   ..\n   42  {\n   43     ASTNodeType Type;\n   44:    double      Value;\n   45     ASTNode*    Left;\n   46     ASTNode*    Right;\n\n17 matches across 5 files\n\n\nSearching 13 files for \"getnumber\"\n\nC:\\GitHub\\TinyRTC\\syntax_parser.c:\n  233      {\n  234          parser->m_crtToken.Type = ID;\n  235:         parser->m_crtToken.Value = GetNumber(parser);\n  236          return;\n  237      }\n\nC:\\GitHub\\TinyRTC\\syntax_parser_old.c:\n   20  static void SkipWhitespaces(Parser * parser);\n   21  static void GetNextToken(Parser * parser);\n   22: static double GetNumber(Parser * parser);\n   23  static ASTNode* CreateNode(Parser * parser, ASTNodeType type, ASTNode* left, ASTNode* right);\n   24  static ASTNode* CreateUnaryNode(Parser * parser, ASTNode* left);\n   ..\n  230      {\n  231          parser->m_crtToken.Type = Number;\n  232:         parser->m_crtToken.Value = GetNumber(parser);\n  233          return;\n  234      }\n  ...\n  259  }\n  260  \n  261: static double GetNumber(Parser * parser)\n  262  {\n  263      ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, 0.0);\n\nC:\\GitHub\\TinyRTC\\TinyRTC.sublime-workspace:\n  244  			\"Factor\",\n  245  			\"m_errorText\",\n  246: 			\"GetNumber\",\n  247  			\"GetNextToken\",\n  248  			\"m_\",\n  249: 			\"GetNumber\",\n  250  			\"closeFile\",\n  251  			\"close\",\n\n6 matches across 3 files\n\n\nSearching 13 files for \"'-'\"\n\nC:\\GitHub\\TinyRTC\\messaging.c:\n   12      \n   13      valid &= strlen(message) == 17;\n   14:     valid &= message[2] == '-';\n   15:     valid &= message[5] == '-';\n   16      valid &= message[8] == ' ';\n   17      valid &= message[11] == ':';\n\nC:\\GitHub\\TinyRTC\\syntax_parser_old.c:\n  240      {\n  241          case '+': parser->m_crtToken.Type = Plus; break;\n  242:         case '-': parser->m_crtToken.Type = Minus; break;\n  243          case '*': parser->m_crtToken.Type = Mul; break;\n  244          case '/': parser->m_crtToken.Type = Div; break;\n\n3 matches across 2 files\n",
-			"settings":
-			{
-				"buffer_size": 7205,
-				"line_ending": "Windows",
-				"name": "Find Results",
-				"scratch": true
-			}
-		},
-		{
-			"file": "syntax_parser.h",
-			"settings":
-			{
-				"buffer_size": 623,
+				"buffer_size": 844,
 				"line_ending": "Windows"
 			}
 		}
@@ -151,11 +145,13 @@
 	"file_history":
 	[
 		"/C/GitHub/TinyRTC/syntax_parser_old.c",
-		"/C/GitHub/TinyRTC/syntax_parser_old.h",
-		"/C/GitHub/TinyRTC/syntax_parser.c",
+		"/C/GitHub/TinyRTC/syntax_parser.test.new.cpp",
 		"/C/GitHub/TinyRTC/syntax_parser.h",
-		"/C/GitHub/DataLogger/libraries/DLTest/Test/DLTest.Mock.LocalStorage.Test.cpp",
+		"/C/GitHub/TinyRTC/syntax_parser.c",
+		"/C/GitHub/TinyRTC/syntax_parser.test.old.cpp",
 		"/C/GitHub/TinyRTC/syntax_parser.test.cpp",
+		"/C/GitHub/TinyRTC/syntax_parser_old.h",
+		"/C/GitHub/DataLogger/libraries/DLTest/Test/DLTest.Mock.LocalStorage.Test.cpp",
 		"/C/GitHub/TinyRTC/messaging.c",
 		"/C/GitHub/DataLogger/libraries/DLTest/Test/DLTest.Mock.LocalStorage.Test.mk",
 		"/C/GitHub/DataLogger/libraries/makefile",
@@ -221,7 +217,7 @@
 	},
 	"find_in_files":
 	{
-		"height": 93.0,
+		"height": 0.0,
 		"where_history":
 		[
 			"-env/",
@@ -235,6 +231,41 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"T",
+			"t",
+			"T",
+			"t",
+			"T",
+			"t",
+			"T",
+			"t",
+			"T",
+			"0",
+			"1",
+			"0",
+			"!",
+			"GetBoolean",
+			"GetNextToken",
+			"m_Index",
+			"1",
+			"0",
+			"debug",
+			"CreateNodeBoolValue",
+			"GetFunctionID",
+			"BoolValue",
+			"CreateNodeBoolValue",
+			"CreateNodeBoolFunction",
+			"truthvalue",
+			"CreateNodeBool",
+			"TruthValue",
+			"Expression",
+			"GetNextToken",
+			"unexpected",
+			"GetNextToken",
+			"Unexpected token",
+			"GetFunctionID",
+			"GetNextToken",
+			"Expression",
 			"m_crtToken.Type",
 			"CreateUnaryNode",
 			"'-'",
@@ -335,314 +366,31 @@
 	"groups":
 	[
 		{
-			"selected": 2,
+			"selected": 0,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "syntax_parser.test.cpp",
+					"file": ".gitignore",
 					"settings":
 					{
-						"buffer_size": 1361,
+						"buffer_size": 844,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								264,
-								264
+								230,
+								230
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"tab_size": 3,
-							"translate_tabs_to_spaces": true
+							"syntax": "Packages/Text/Plain text.tmLanguage"
 						},
 						"translation.x": 0.0,
-						"translation.y": 57.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "syntax_parser.c",
-					"settings":
-					{
-						"buffer_size": 8108,
-						"regions":
-						{
-							"bookmarks":
-							{
-								"flags": 144,
-								"icon": "bookmark",
-								"regions":
-								[
-									[
-										2626,
-										2637
-									]
-								],
-								"scope": "bookmarks"
-							}
-						},
-						"selection":
-						[
-							[
-								6906,
-								6906
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/User/Stino/Arduino.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 1787.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"settings":
-					{
-						"buffer_size": 7205,
-						"regions":
-						{
-							"match":
-							{
-								"flags": 112,
-								"regions":
-								[
-									[
-										101,
-										107
-									],
-									[
-										288,
-										294
-									],
-									[
-										551,
-										557
-									],
-									[
-										725,
-										731
-									],
-									[
-										893,
-										899
-									],
-									[
-										1107,
-										1113
-									],
-									[
-										1372,
-										1378
-									],
-									[
-										1458,
-										1464
-									],
-									[
-										1608,
-										1614
-									],
-									[
-										1772,
-										1778
-									],
-									[
-										1884,
-										1890
-									],
-									[
-										2025,
-										2031
-									],
-									[
-										2165,
-										2171
-									],
-									[
-										2220,
-										2226
-									],
-									[
-										2341,
-										2347
-									],
-									[
-										2511,
-										2517
-									],
-									[
-										2621,
-										2627
-									],
-									[
-										2827,
-										2833
-									],
-									[
-										3014,
-										3020
-									],
-									[
-										3277,
-										3283
-									],
-									[
-										3451,
-										3457
-									],
-									[
-										3619,
-										3625
-									],
-									[
-										3833,
-										3839
-									],
-									[
-										4098,
-										4104
-									],
-									[
-										4184,
-										4190
-									],
-									[
-										4334,
-										4340
-									],
-									[
-										4498,
-										4504
-									],
-									[
-										4610,
-										4616
-									],
-									[
-										4751,
-										4757
-									],
-									[
-										4891,
-										4897
-									],
-									[
-										4946,
-										4952
-									],
-									[
-										5067,
-										5073
-									],
-									[
-										5237,
-										5243
-									],
-									[
-										5347,
-										5353
-									],
-									[
-										5623,
-										5632
-									],
-									[
-										5842,
-										5851
-									],
-									[
-										6153,
-										6162
-									],
-									[
-										6252,
-										6261
-									],
-									[
-										6451,
-										6460
-									],
-									[
-										6516,
-										6525
-									],
-									[
-										6748,
-										6751
-									],
-									[
-										6787,
-										6790
-									],
-									[
-										7008,
-										7011
-									]
-								],
-								"scope": ""
-							}
-						},
-						"selection":
-						[
-							[
-								7031,
-								7031
-							]
-						],
-						"settings":
-						{
-							"detect_indentation": false,
-							"output_tag": 4,
-							"result_base_dir": "",
-							"result_file_regex": "^([A-Za-z\\\\/<].*):$",
-							"result_line_regex": "^ +([0-9]+):",
-							"scroll_past_end": true,
-							"syntax": "Packages/Default/Find Results.hidden-tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 4446.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"file": "syntax_parser.h",
-					"settings":
-					{
-						"buffer_size": 623,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								240,
-								240
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 228.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"

@@ -1,59 +1,56 @@
+/* syntax_parser.c
+ * Parses logical expressions into abstract syntax trees
+ */
+
+/*
+ * C Library Includes
+ */
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 
+/*
+ * Local Application Includes
+ */
+
+#include "ast_node.h"
 #include "syntax_parser.h"
 
-#define ON_PARSER_ERROR_EXIT_EARLY(parser) { if (!parser->m_success) { return; }}
-#define ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, rtn) { if (!parser->m_success) { return rtn; }}
-
-#define MAX_NODE_NUMBER (128)
 #define MAX_FUNCTIONS (16)
 
-//#define DEBUG
-
-static ASTNode* Expression(Parser * parser);
-static ASTNode* Expression1(Parser * parser);
-static ASTNode* Term(Parser * parser);
-static ASTNode* Term1(Parser * parser);
+static ASTNode* expression(Parser * parser);
+static ASTNode* expression1(Parser * parser);
+static ASTNode* term(Parser * parser);
+static ASTNode* term1(Parser * parser);
 static ASTNode* Factor(Parser * parser);
-static void Match(Parser * parser, char expected);
-static void SkipWhitespaces(Parser * parser);
-static void GetNextToken(Parser * parser);
-static ASTNode* CreateNode(Parser * parser, ASTNodeType type, ASTNode* left, ASTNode* right);
-static ASTNode* CreateUnaryNode(Parser * parser, ASTNode* left);
-static ASTNode* CreateNodeBoolValue(Parser * parser, bool value);
-static ASTNode* CreateNodeBoolFunction(Parser * parser, uint8_t fid);
-static ASTNode* GetNextFreeNode(Parser * parser);
-static bool EvaluateSubtree(ASTNode* ast);
+static void match(Parser * parser, char expected);
+static void skipWhitespaces(Parser * parser);
+static void getNextToken(Parser * parser);
 
-static ASTNode s_freeNodes[MAX_NODE_NUMBER];
-static uint8_t s_freeNodeIndex = 0;
+static bool evaluateSubtree(ASTNode* ast);
 
 static bool defaultFn(void) { return false; }
 
 static BOOLFUNCTION s_functions[MAX_FUNCTIONS];
 
-static ASTNode* Expression(Parser * parser)
+static ASTNode* expression(Parser * parser)
 {
-    #ifdef DEBUG
-    printf("%s\n", __func__);
-    #endif
+    
+    DEBUG ( printf("%s\n", __func__) );
 
     ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
-    ASTNode* tnode = Term(parser);
-    ASTNode* e1node = Expression1(parser);
+    ASTNode* tnode = term(parser);
+    ASTNode* e1node = expression1(parser);
 
-    return CreateNode(parser, OperatorAnd, tnode, e1node);
+    return AST_CreateNode(parser, OperatorAnd, tnode, e1node);
 }
 
-static ASTNode* Expression1(Parser * parser)
+static ASTNode* expression1(Parser * parser)
 {
-    #ifdef DEBUG
-    printf("%s\n", __func__);
-    #endif
+    DEBUG( printf("%s\n", __func__) );
+
     ASTNode* tnode;
     ASTNode* e1node;
 
@@ -61,34 +58,30 @@ static ASTNode* Expression1(Parser * parser)
     switch(parser->m_crtToken.Type)
     {
         case And:
-        GetNextToken(parser);
-        tnode = Term(parser);
-        e1node = Expression1(parser);
-        return CreateNode(parser, OperatorAnd, e1node, tnode);
+        getNextToken(parser);
+        tnode = term(parser);
+        e1node = expression1(parser);
+        return AST_CreateNode(parser, OperatorAnd, e1node, tnode);
         break;
     }
 
-    return CreateNodeBoolValue(parser, true);
+    return AST_CreateNodeBoolValue(parser, true);
 }
 
-static ASTNode* Term(Parser * parser)
+static ASTNode* term(Parser * parser)
 {
-    #ifdef DEBUG
-    printf("%s\n", __func__);
-    #endif
+    DEBUG( printf("%s\n", __func__) );
 
     ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
     ASTNode* fnode = Factor(parser);
-    ASTNode* t1node = Term1(parser);
+    ASTNode* t1node = term1(parser);
 
-    return CreateNode(parser, OperatorOr, fnode, t1node);
+    return AST_CreateNode(parser, OperatorOr, fnode, t1node);
 }
 
-static ASTNode* Term1(Parser * parser)
+static ASTNode* term1(Parser * parser)
 {
-    #ifdef DEBUG
-    printf("%s\n", __func__);
-    #endif
+    DEBUG( printf("%s\n", __func__) );
 
     ASTNode* fnode;
     ASTNode* t1node;
@@ -97,21 +90,19 @@ static ASTNode* Term1(Parser * parser)
     switch(parser->m_crtToken.Type)
     {
         case Or:
-        GetNextToken(parser);
+        getNextToken(parser);
         fnode = Factor(parser);
-        t1node = Term1(parser);
-        return CreateNode(parser, OperatorOr, t1node, fnode);
+        t1node = term1(parser);
+        return AST_CreateNode(parser, OperatorOr, t1node, fnode);
         break;
     }
 
-    return CreateNodeBoolValue(parser, false);
+    return AST_CreateNodeBoolValue(parser, false);
 }
 
 static ASTNode* Factor(Parser * parser)
 {
-    #ifdef DEBUG
-    printf("%s\n", __func__);
-    #endif
+    DEBUG( printf("%s\n", __func__) );
 
     ASTNode* node;
     uint8_t value;
@@ -120,25 +111,25 @@ static ASTNode* Factor(Parser * parser)
     switch(parser->m_crtToken.Type)
     {
         case OpenParenthesis:
-            GetNextToken(parser);
-            node = Expression(parser);
-            Match(parser, ')');
+            getNextToken(parser);
+            node = expression(parser);
+            match(parser, ')');
             return node;
 
         case Not:
-            GetNextToken(parser);
+            getNextToken(parser);
             node = Factor(parser);
-            return CreateUnaryNode(parser, node);
+            return AST_CreateUnaryNode(parser, node);
 
         case Number:
             value = parser->m_crtToken.Value;
-            GetNextToken(parser);
-            return CreateNodeBoolFunction(parser, value);
+            getNextToken(parser);
+            return AST_CreateNodeBoolFunction(parser, value);
 
         case BoolChar:
             value = parser->m_crtToken.Value;
-            GetNextToken(parser);
-            return CreateNodeBoolValue(parser, (bool)value);
+            getNextToken(parser);
+            return AST_CreateNodeBoolValue(parser, (bool)value);
         default:
             parser->m_success = false;
             sprintf(parser->m_errorMessage, "%s: At position %d unexpected token '%c'",
@@ -147,99 +138,16 @@ static ASTNode* Factor(Parser * parser)
     }
 }
 
-static ASTNode* CreateNode(Parser * parser, ASTNodeType type, ASTNode* left, ASTNode* right)
-{
-    #ifdef DEBUG
-    printf("%s\n", __func__);
-    #endif
 
-    ASTNode* node = GetNextFreeNode(parser);
-
-    if (node)
-    {
-        node->Type = type;
-        node->Left = left;
-        node->Right = right;
-        #ifdef DEBUG
-        printf("%s (%s)\n", __func__, type == OperatorOr ? "or" : "and");
-        #endif
-    }
-
-    return node;
-}
-
-static ASTNode* CreateUnaryNode(Parser * parser, ASTNode* left)
-{
-    ASTNode* node = GetNextFreeNode(parser);
-
-    if (node)
-    {
-        node->Type = UnaryNot;
-        node->Left = left;
-        node->Right = NULL;
-        #ifdef DEBUG
-        printf("%s (not)\n", __func__);
-        #endif
-    }
-
-    return node;
-}
-
-static ASTNode* CreateNodeBoolFunction(Parser * parser, uint8_t value)
-{
-    ASTNode* node = GetNextFreeNode(parser);
-
-    if (node)
-    {
-        node->Type = FunctionID;
-        node->Value = value;
-        #ifdef DEBUG
-        printf("%s (%d)\n", __func__, value);
-        #endif
-    }
-
-    return node;
-}
-
-static ASTNode* CreateNodeBoolValue(Parser * parser, bool value)
-{
-    ASTNode* node = GetNextFreeNode(parser);
-
-    if (node)
-    {
-        node->Type = FunctionID;
-        node->Value = value;
-        #ifdef DEBUG
-        printf("%s (%s)\n", __func__, value ? "true" : "false");
-        #endif
-    }
-
-    return node;
-}
-
-static ASTNode* GetNextFreeNode(Parser * parser)
-{
-
-    ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
-
-    if (s_freeNodeIndex < MAX_NODE_NUMBER)
-    {
-        return &s_freeNodes[s_freeNodeIndex++];
-    }
-    else
-    {
-        parser->m_success = false;
-        sprintf(parser->m_errorMessage, "Maximum number of nodes (%d) exceeded", MAX_NODE_NUMBER);
-        return NULL;
-    }
-}
-
-static void Match(Parser * parser, char expected)
+/* match 
+ * Check that the parser is at the expected char and jump over it (do not process)
+ */
+static void match(Parser * parser, char expected)
 {
     ON_PARSER_ERROR_EXIT_EARLY(parser);
     if(parser->m_Text[parser->m_Index-1] == expected)
     {
-        GetNextToken(parser);
+        getNextToken(parser);
     }
     else
     {
@@ -249,17 +157,23 @@ static void Match(Parser * parser, char expected)
     }
 }
 
-static void SkipWhitespaces(Parser * parser)
+/* skipWhitespaces 
+ * Jump the parser ahead over whitespace
+ */
+static void skipWhitespaces(Parser * parser)
 {
     ON_PARSER_ERROR_EXIT_EARLY(parser);
     while(isspace(parser->m_Text[parser->m_Index])) parser->m_Index++;
 }
 
+/* GetInteger 
+ * From the current location in the parse text, return an integer.
+ */
 static uint8_t GetInteger(Parser * parser)
 {
     ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, 0);
     
-    SkipWhitespaces(parser);
+    skipWhitespaces(parser);
 
     int index = parser->m_Index;
     while(isdigit(parser->m_Text[parser->m_Index])) parser->m_Index++;
@@ -293,29 +207,30 @@ static uint8_t GetInteger(Parser * parser)
     return (uint8_t)result;
 }
 
-static void GetNextToken(Parser * parser)
+/* getNextToken 
+ * Skip to the next token in the input string and tag appropriately for processing
+ */
+static void getNextToken(Parser * parser)
 {
     ON_PARSER_ERROR_EXIT_EARLY(parser);
 
     // ignore white spaces
-    SkipWhitespaces(parser);
+    skipWhitespaces(parser);
 
     parser->m_crtToken.Value = 0;
     parser->m_crtToken.Symbol = 0;
     parser->m_crtToken.Type = Error;
 
-    #ifdef DEBUG
-    printf("Next token: '%c'\n", parser->m_Text[parser->m_Index]);
-    #endif
+    DEBUG( printf("Next token: '%c'\n", parser->m_Text[parser->m_Index]) );
 
     // test for the end of text
     if(parser->m_Text[parser->m_Index] == 0)
     {
-        parser->m_crtToken.Type = EndOfText;
+        parser->m_crtToken.Type = EndOfText; // No more text to parse
         return;
     }
 
-    // if the current character is a digit it is a function ID
+    // if the current character is a digit then parse to the end of the number
     if(isdigit(parser->m_Text[parser->m_Index]))
     {
         parser->m_crtToken.Type = Number;
@@ -323,6 +238,7 @@ static void GetNextToken(Parser * parser)
         return;
     }
 
+    // T and F represent constant True and False values
     if(parser->m_Text[parser->m_Index] == 'T' || parser->m_Text[parser->m_Index] == 'F')
     {
         parser->m_crtToken.Type = BoolChar;
@@ -357,22 +273,42 @@ static void GetNextToken(Parser * parser)
     }
 }
 
-static bool EvaluateSubtree(ASTNode* ast)
+/* LEP_Init 
+ * Initialises this module
+ */
+void LEP_Init(void)
+{
+    uint8_t i;
+    for (i = 0; i < MAX_FUNCTIONS; ++i)
+    {
+        // Ensure all functions start off pointing at the root
+        s_functions[i] = defaultFn; 
+    }
+}
+
+/* LEP_Evaluate 
+ * Evaluate the AST starting at the given root node.
+ * Called recursively for each node
+ */
+bool LEP_Evaluate(ASTNode* ast)
 {
     if(ast == NULL) { return false; }
 
     if(ast->Type == FunctionID)
     {
+        // Invoke and return the boolean function for the node
         return s_functions[ast->Value]();
     }
     else if(ast->Type == UnaryNot)
     {
-        return !EvaluateSubtree(ast->Left);
+        // Return the inverse of the subtree below this node
+        return !LEP_Evaluate(ast->Left);
     }
     else
     {
-        bool v1 = EvaluateSubtree(ast->Left);
-        bool v2 = EvaluateSubtree(ast->Right);
+        // Return either the AND or OR of the two subtrees below this node
+        bool v1 = LEP_Evaluate(ast->Left);
+        bool v2 = LEP_Evaluate(ast->Right);
         switch(ast->Type)
         {
             case OperatorAnd:  return v1 && v2;
@@ -383,39 +319,31 @@ static bool EvaluateSubtree(ASTNode* ast)
     return false;
 }
 
-void Parser_Init(void)
-{
-    uint8_t i;
-    for (i = 0; i < MAX_FUNCTIONS; ++i)
-    {
-        s_functions[i] = defaultFn;
-    }
-}
-
-bool Evaluate(ASTNode* ast)
-{
-    if(ast == NULL) { return false; }
-
-    return EvaluateSubtree(ast);
-}
-
-ASTNode * Parse(Parser * parser, const char* text)
+/* LEP_Parse 
+ * Parse and produce an AST for the given text, but do not evaluate.
+ */
+ASTNode * LEP_Parse(Parser * parser, const char* text)
 {
     if (!parser) { return NULL; }
 
-    s_freeNodeIndex = 0;
+    AST_Init();
 
     parser->m_Text = text;
     parser->m_Index = 0;
     parser->m_success = true;
     parser->m_errorMessage[0] = '\0';
 
-    GetNextToken(parser);
+    getNextToken(parser);
 
-    return Expression(parser);
+    return expression(parser);
 }
 
-void RegisterFunction(uint8_t fid, BOOLFUNCTION fn)
+/* LEP_RegisterFunction 
+ * When a number is present in the input string, it represents a function from
+ * 0 to MAX_FUNCTIONS-1. The application can register functions for each ID.
+ * If no function is registered for a called function, defaultFn is called.
+ */
+void LEP_RegisterFunction(uint8_t fid, BOOLFUNCTION fn)
 {
     if (!fn) {return;}
     if (fid >= MAX_FUNCTIONS) { return; }
