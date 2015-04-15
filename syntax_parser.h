@@ -1,4 +1,4 @@
-enum TokenType 
+enum TokenType
 {
    Error,
    And,
@@ -9,8 +9,8 @@ enum TokenType
    ClosedParenthesis,
    ID
 };
- 
-struct Token 
+
+struct Token
 {
    TokenType    Type;
    double       Value;
@@ -26,7 +26,7 @@ struct Parser
     char m_errorMessage[30];
 };
 
-enum ASTNodeType 
+enum ASTNodeType
 {
    Undefined,
    OperatorAnd,
@@ -45,4 +45,6 @@ struct ASTNode
 
 typedef bool (*BOOLFUNCTION)(void);
 
-void Parse(Parser * parser, const char* text);
+bool Evaluate(ASTNode* ast);
+ASTNode * Parse(Parser * parser, const char* text);
+void RegisterFunction(uint8_t fid, BOOLFUNCTION fn);

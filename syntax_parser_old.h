@@ -1,4 +1,4 @@
-enum TokenType 
+enum TokenType
 {
    Error,
    Plus,
@@ -10,8 +10,8 @@ enum TokenType
    ClosedParenthesis,
    Number
 };
- 
-struct Token 
+
+struct Token
 {
    TokenType    Type;
    double       Value;
@@ -27,7 +27,7 @@ struct Parser
     char m_errorMessage[30];
 };
 
-enum ASTNodeType 
+enum ASTNodeType
 {
    Undefined,
    OperatorPlus,
@@ -46,4 +46,5 @@ struct ASTNode
    ASTNode*    Right;
 };
 
-void Parse(Parser * parser, const char* text);
+ASTNode * Parse(Parser * parser, const char* text);
+double Evaluate(ASTNode* ast);

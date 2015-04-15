@@ -4,7 +4,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "syntax_parser.h"
+#include "syntax_parser_old.h"
 
 #define ON_PARSER_ERROR_EXIT_EARLY(parser) { if (!parser->m_success) { return; }}
 #define ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, rtn) { if (!parser->m_success) { return rtn; }}
@@ -81,7 +81,7 @@ static ASTNode* Term1(Parser * parser)
     ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
     switch(parser->m_crtToken.Type)
     {
-        case Mul: 
+        case Mul:
         GetNextToken(parser);
         fnode = Factor(parser);
         t1node = Term1(parser);
@@ -91,7 +91,7 @@ static ASTNode* Term1(Parser * parser)
         case Div:
         GetNextToken(parser);
         fnode = Factor(parser);
-        Term1(parser);
+        t1node = Term1(parser);
         return CreateNode(parser, OperatorDiv, t1node, fnode);
         break;
     }
@@ -161,7 +161,7 @@ static ASTNode* CreateUnaryNode(Parser * parser, ASTNode* left)
 static ASTNode* CreateNodeNumber(Parser * parser, double value)
 {
     ASTNode* node = GetNextFreeNode(parser);
-    
+
     if (node)
     {
         node->Type = NumberValue;
@@ -271,9 +271,9 @@ static double GetNumber(Parser * parser)
 
     if(parser->m_Index - index == 0)
     {
-        sprintf(parser->m_errorMessage, "Number expected but not found at position %d!", parser->m_Index);   
+        sprintf(parser->m_errorMessage, "Number expected but not found at position %d!", parser->m_Index);
     }
-     
+
 
     char buffer[32] = {0};
     memcpy(buffer, &parser->m_Text[index], parser->m_Index - index);
@@ -293,7 +293,7 @@ static double EvaluateSubtree(ASTNode* ast)
     {
         return -EvaluateSubtree(ast->Left);
     }
-    else 
+    else
     {
         double v1 = EvaluateSubtree(ast->Left);
         double v2 = EvaluateSubtree(ast->Right);
@@ -312,13 +312,13 @@ static double EvaluateSubtree(ASTNode* ast)
 double Evaluate(ASTNode* ast)
 {
     if(ast == NULL) { return 0.0; }
-    
+
     return EvaluateSubtree(ast);
 }
 
-void Parse(Parser * parser, const char* text)
+ASTNode * Parse(Parser * parser, const char* text)
 {
-    if (!parser) { return; }
+    if (!parser) { return NULL; }
 
     s_freeNodeIndex = 0;
 
@@ -329,5 +329,5 @@ void Parse(Parser * parser, const char* text)
 
     GetNextToken(parser);
 
-    Expression(parser);
+    return Expression(parser);
 }

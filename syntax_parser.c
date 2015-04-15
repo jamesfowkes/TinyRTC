@@ -38,7 +38,7 @@ static ASTNode* Expression(Parser * parser)
     ASTNode* tnode = Term(parser);
     ASTNode* e1node = Expression1(parser);
 
-    return CreateNode(parser, OperatorOr, tnode, e1node);
+    return CreateNode(parser, OperatorAnd, tnode, e1node);
 }
 
 static ASTNode* Expression1(Parser * parser)
@@ -55,13 +55,6 @@ static ASTNode* Expression1(Parser * parser)
         e1node = Expression1(parser);
         return CreateNode(parser, OperatorAnd, e1node, tnode);
         break;
-
-        case Or:
-        GetNextToken(parser);
-        tnode = Term(parser);
-        e1node = Expression1(parser);
-        return CreateNode(parser, OperatorOr, e1node, tnode);
-        break;
     }
 
     return CreateNodeBool(parser, 0);
@@ -73,7 +66,7 @@ static ASTNode* Term(Parser * parser)
     ASTNode* fnode = Factor(parser);
     ASTNode* t1node = Term1(parser);
 
-    return CreateNode(parser, OperatorMul, fnode, t1node);
+    return CreateNode(parser, OperatorOr, fnode, t1node);
 }
 
 static ASTNode* Term1(Parser * parser)
@@ -84,18 +77,11 @@ static ASTNode* Term1(Parser * parser)
     ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
     switch(parser->m_crtToken.Type)
     {
-        case Mul: 
-        GetNextToken(parser);
-        fnode = Factor(parser);
-        t1node = Term1(parser);
-        return CreateNode(parser, OperatorMul, t1node, fnode);
-        break;
-
-        case Div:
+        case Or:
         GetNextToken(parser);
         fnode = Factor(parser);
         Term1(parser);
-        return CreateNode(parser, OperatorDiv, t1node, fnode);
+        return CreateNode(parser, OperatorOr, t1node, fnode);
         break;
     }
 
@@ -164,7 +150,7 @@ static ASTNode* CreateUnaryNode(Parser * parser, ASTNode* left)
 static ASTNode* CreateNodeBool(Parser * parser, bool value)
 {
     ASTNode* node = GetNextFreeNode(parser);
-    
+
     if (node)
     {
         node->Type = FunctionID;
@@ -273,7 +259,7 @@ static bool GetBoolean(Parser * parser)
             return false;
         default:
             parser->m_success = false;
-            sprintf(parser->m_errorMessage, "T or F expected but not found at position %d!", parser->m_Index);   
+            sprintf(parser->m_errorMessage, "T or F expected but not found at position %d!", parser->m_Index);
             return false;
     }
 }
@@ -284,13 +270,13 @@ static bool EvaluateSubtree(ASTNode* ast)
 
     if(ast->Type == FunctionID)
     {
-        return ast->Value;
+        return s_functions[ast->Value]();
     }
     else if(ast->Type == UnaryNot)
     {
         return !EvaluateSubtree(ast->Left);
     }
-    else 
+    else
     {
         bool v1 = EvaluateSubtree(ast->Left);
         bool v2 = EvaluateSubtree(ast->Right);
@@ -307,13 +293,13 @@ static bool EvaluateSubtree(ASTNode* ast)
 bool Evaluate(ASTNode* ast)
 {
     if(ast == NULL) { return false; }
-    
+
     return EvaluateSubtree(ast);
 }
 
-void Parse(Parser * parser, const char* text)
+ASTNode * Parse(Parser * parser, const char* text)
 {
-    if (!parser) { return; }
+    if (!parser) { return NULL; }
 
     s_freeNodeIndex = 0;
 
@@ -324,5 +310,13 @@ void Parse(Parser * parser, const char* text)
 
     GetNextToken(parser);
 
-    Expression(parser);
+    return Expression(parser);
+}
+
+void RegisterFunction(uint8_t fid, BOOLFUNCTION fn)
+{
+    if (!fn) {return;}
+    if (fid >= MAX_FUNCTIONS) { return; }
+
+    s_functions[fid] = fn;
 }
