@@ -1,3 +1,19 @@
+#ifndef _SYNTAX_PARSER_H_
+#define _SYNTAX_PARSER_H_
+
+/*
+ * Defines and Typedefs
+ */
+
+#define ON_PARSER_ERROR_EXIT_EARLY(parser) { if (!parser->m_success) { return; }}
+#define ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, rtn) { if (!parser->m_success) { return rtn; }}
+
+#ifdef _DEBUG
+#define DEBUG(x) {x;}
+#else
+#define DEBUG(x) {}
+#endif
+
 enum TokenType
 {
    Error,
@@ -7,14 +23,15 @@ enum TokenType
    EndOfText,
    OpenParenthesis,
    ClosedParenthesis,
-   ID
+   Number,
+   BoolChar
 };
 
 struct Token
 {
-   TokenType    Type;
-   double       Value;
-   char     Symbol;
+   TokenType  Type;
+   uint8_t    Value;
+   char       Symbol;
 };
 
 struct Parser
@@ -26,25 +43,15 @@ struct Parser
     char m_errorMessage[30];
 };
 
-enum ASTNodeType
-{
-   Undefined,
-   OperatorAnd,
-   OperatorOr,
-   UnaryNot,
-   FunctionID
-};
-
-struct ASTNode
-{
-   ASTNodeType Type;
-   bool      Value;
-   ASTNode*    Left;
-   ASTNode*    Right;
-};
-
 typedef bool (*BOOLFUNCTION)(void);
 
-bool Evaluate(ASTNode* ast);
-ASTNode * Parse(Parser * parser, const char* text);
-void RegisterFunction(uint8_t fid, BOOLFUNCTION fn);
+/*
+ * Public Function Declarations
+ */
+
+void LEP_Init(void);
+bool LEP_Evaluate(ASTNode* ast);
+ASTNode * LEP_Parse(Parser * parser, const char* text);
+void LEP_RegisterFunction(uint8_t fid, BOOLFUNCTION fn);
+
+#endif
