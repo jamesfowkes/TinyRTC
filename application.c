@@ -1,11 +1,25 @@
-#include <stdbool.h>
+/*
+ * C Library Includes
+ */
 
+#include <stdbool.h>
+#include <stdint.h>
+
+/*
+ * Application Includes
+ */
+
+#include "msggetter.h"
 #include "messaging.h"
 
-bool s_msgReceived = false;
-
-bool setRTC(uint8_t yy, uint8_t mm, uint8_t dd, uint8_t hh, uint8_t mm, uint8_t ss)
+bool setRTC(uint8_t yy, uint8_t mmm, uint8_t dd, uint8_t hh, uint8_t mm, uint8_t ss)
 {
+	(void)yy;
+	(void)mmm;
+	(void)dd;
+	(void)hh;
+	(void)mm;
+	(void)ss;
     return true;
 }
 
@@ -15,14 +29,14 @@ bool printRTC(void)
     return false;
 }
 
-
-void main(void)
+int main(void)
 {
     while(1)
     {
-        if (s_msgReceived)
+        if (updateMessages())
         {
             handleMessage(getNextMessage());
         }
     }
+    return -1;
 }
