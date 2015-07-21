@@ -1,6 +1,20 @@
+/*
+ * C Library Includes
+ */
+
 #include <stdbool.h>
+#include <stdint.h>
+#include <string.h>
+
+/*
+ * Code Library Includes
+ */
 
 #include "util_time.h"
+
+/*
+ * Application Includes
+ */
 
 #include "messaging.h"
 
@@ -17,16 +31,25 @@ static bool messageIsCorrectRTCFormat(char * message)
     valid &= message[11] == ':';
     valid &= message[13] == ':';
     
-    return valid
+    return valid;
 }
 
-static bool parseMessageToDatePart(char * pResult, char tensASCII, char unitsASCII);
+static bool parseMessageToDatePart(uint8_t * pResult, char tensASCII, char unitsASCII)
 {
     // Convert ASCII chars to actual value
     tensASCII -= '0';
     unitsASCII -= '0';
-    
-    *pResult = (tensASCII * 10) + unitsASCII;
+
+    uint16_t result = (tensASCII * 10) + unitsASCII;
+
+    bool valid = result <= 59;
+
+    if (valid)
+    {
+        *pResult = result;
+    }
+
+    return valid;
 }
 
 static bool setRTCFromMessage(char * message)
@@ -45,15 +68,17 @@ static bool setRTCFromMessage(char * message)
     
     // Validate month, date, hour, minute and second
     GREGORIAN_YEAR fourDigitYear = 2000 + dateParts[0];
-    int daysInMonth = days_in_month(dateParts[1], isLeapYear(fourDigitYear));
-    if (dateParts[1] > 12) { return; }
-    if (dateParts[2] > daysInMonth) { return; }
-    if (dateParts[3] > 23) { return; }
-    if (dateParts[4] > 59) { return; }
-    if (dateParts[5] > 59) { return; }
+    int daysInMonth = days_in_month(dateParts[1], is_leap_year(fourDigitYear));
+    if (dateParts[1] > 12) { return false; }
+    if (dateParts[2] > daysInMonth) { return false; }
+    if (dateParts[3] > 23) { return false; }
+    if (dateParts[4] > 59) { return false; }
+    if (dateParts[5] > 59) { return false; }
     
     // Got this far, everything is valid
     setRTC(dateParts[0], dateParts[1], dateParts[2], dateParts[3], dateParts[4], dateParts[5]);
+
+    return true;
 }
 
 static bool setTimedActionFromMessage(char * message)

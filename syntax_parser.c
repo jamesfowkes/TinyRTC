@@ -10,13 +10,14 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdbool.h>
 
 /*
  * Local Application Includes
  */
 
-#include "ast_node.h"
 #include "syntax_parser.h"
+#include "ast_node.h"
 
 #define MAX_FUNCTIONS (16)
 
@@ -35,10 +36,9 @@ static BOOLFUNCTION s_functions[MAX_FUNCTIONS];
 
 static ASTNode* expression(Parser * parser)
 {
-
+    ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
     DEBUG ( printf("%s\n", __func__) );
 
-    ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
     ASTNode* tnode = term(parser);
     ASTNode* e1node = expression1(parser);
 
@@ -47,22 +47,22 @@ static ASTNode* expression(Parser * parser)
 
 static ASTNode* expression1(Parser * parser)
 {
+    ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
     DEBUG( printf("%s\n", __func__) );
 
     ASTNode* tnode;
     ASTNode* e1node;
 
-    ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
     switch(parser->m_crtToken.Type)
     {
         case And:
-        getNextToken(parser);
-        tnode = term(parser);
-        e1node = expression1(parser);
-        return AST_CreateNode(parser, OperatorAnd, e1node, tnode);
+            getNextToken(parser);
+            tnode = term(parser);
+            e1node = expression1(parser);
+            return AST_CreateNode(parser, OperatorAnd, e1node, tnode);
         break;
         default:
-        break;
+            break;
     }
 
     return AST_CreateNodeBoolValue(parser, true);
@@ -81,22 +81,22 @@ static ASTNode* term(Parser * parser)
 
 static ASTNode* term1(Parser * parser)
 {
+    ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
     DEBUG( printf("%s\n", __func__) );
 
     ASTNode* fnode;
     ASTNode* t1node;
 
-    ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
     switch(parser->m_crtToken.Type)
     {
         case Or:
-        getNextToken(parser);
-        fnode = Factor(parser);
-        t1node = term1(parser);
-        return AST_CreateNode(parser, OperatorOr, t1node, fnode);
+            getNextToken(parser);
+            fnode = Factor(parser);
+            t1node = term1(parser);
+            return AST_CreateNode(parser, OperatorOr, t1node, fnode);
         break;
         default:
-        break;
+            break;
     }
 
     return AST_CreateNodeBoolValue(parser, false);
@@ -104,12 +104,12 @@ static ASTNode* term1(Parser * parser)
 
 static ASTNode* Factor(Parser * parser)
 {
+    ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
     DEBUG( printf("%s\n", __func__) );
 
     ASTNode* node;
     uint8_t value;
 
-    ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
     switch(parser->m_crtToken.Type)
     {
         case OpenParenthesis:
@@ -134,8 +134,8 @@ static ASTNode* Factor(Parser * parser)
             return AST_CreateNodeBoolValue(parser, (bool)value);
         default:
             parser->m_success = false;
-            sprintf(parser->m_errorMessage, "%s: At position %d unexpected token '%c'",
-                __func__, parser->m_Index, parser->m_crtToken.Symbol);
+            snprintf(parser->m_errorMessage, sizeof(parser->m_errorMessage), "%s: At position %d unexpected token '%c'",
+                __func__, (int)parser->m_Index, parser->m_crtToken.Symbol);
             return NULL;
     }
 }
@@ -147,6 +147,7 @@ static ASTNode* Factor(Parser * parser)
 static void match(Parser * parser, char expected)
 {
     ON_PARSER_ERROR_EXIT_EARLY(parser);
+
     if(parser->m_Text[parser->m_Index-1] == expected)
     {
         getNextToken(parser);
@@ -154,8 +155,8 @@ static void match(Parser * parser, char expected)
     else
     {
         parser->m_success = false;
-        sprintf(parser->m_errorMessage, "At position %d unexpected token '%c' (Line %d)",
-            parser->m_Index, expected, __LINE__);
+        snprintf(parser->m_errorMessage, sizeof(parser->m_errorMessage), "At position %d unexpected token '%c' (Line %d)",
+            (int)parser->m_Index, expected, __LINE__);
     }
 }
 
@@ -183,7 +184,7 @@ static uint8_t GetInteger(Parser * parser)
     if(parser->m_Index - index == 0)
     {
         parser->m_success = false;
-        sprintf(parser->m_errorMessage, "Number expected but not found at position %d!", parser->m_Index);
+        snprintf(parser->m_errorMessage, sizeof(parser->m_errorMessage), "Number expected but not found at position %d!", (int)parser->m_Index);
         return 0;
     }
 
@@ -195,14 +196,14 @@ static uint8_t GetInteger(Parser * parser)
     if (result > 255)
     {
         parser->m_success = false;
-        sprintf(parser->m_errorMessage, "Function ID %lu exceeds 255!", result);
+        snprintf(parser->m_errorMessage, sizeof(parser->m_errorMessage), "Function ID %lu exceeds 255!", result);
         return 0;
     }
 
     if (result >= MAX_FUNCTIONS)
     {
         parser->m_success = false;
-        sprintf(parser->m_errorMessage, "Function ID %lu exceeds maximum allocation of MAX_FUNCTIONS!", result);
+        snprintf(parser->m_errorMessage, sizeof(parser->m_errorMessage), "Function ID %lu exceeds maximum allocation of MAX_FUNCTIONS!", result);
         return 0;
     }
 
@@ -257,6 +258,7 @@ static void getNextToken(Parser * parser)
         case '!': parser->m_crtToken.Type = Not; break;
         case '(': parser->m_crtToken.Type = OpenParenthesis; break;
         case ')': parser->m_crtToken.Type = ClosedParenthesis; break;
+        default: break;
     }
 
     if(parser->m_crtToken.Type != Error)
@@ -269,8 +271,8 @@ static void getNextToken(Parser * parser)
         parser->m_success = false;
         if (parser->m_Text[parser->m_Index])
         {
-            sprintf(parser->m_errorMessage, "%s: At position %d unexpected token '%c'",
-                __func__, parser->m_Index, parser->m_Text[parser->m_Index]);
+            snprintf(parser->m_errorMessage, sizeof(parser->m_errorMessage), "%s: At position %d unexpected token '%c'",
+                __func__, (int)parser->m_Index, parser->m_Text[parser->m_Index]);
         }
     }
 }
@@ -294,6 +296,7 @@ void LEP_Init(void)
  */
 bool LEP_Evaluate(ASTNode* ast)
 {
+
     if(ast == NULL) { return false; }
 
     if(ast->Type == FunctionID)
@@ -316,7 +319,7 @@ bool LEP_Evaluate(ASTNode* ast)
             case OperatorAnd:  return v1 && v2;
             case OperatorOr: return v1 || v2;
             default:
-            break;
+                break;
         }
     }
 

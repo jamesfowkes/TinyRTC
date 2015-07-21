@@ -10,13 +10,14 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdbool.h>
 
 /*
  * Local Application Includes
  */
-
-#include "ast_node.h"
+ 
 #include "syntax_parser.h"
+#include "ast_node.h"
 
 /*
  * Defines and Typedefs
@@ -36,8 +37,8 @@ static uint8_t s_freeNodeIndex = 0;
  */
 static ASTNode* getNextFreeNode(Parser * parser)
 {
-
     ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
+    DEBUG( printf("%s\n", __func__) );
 
     if (s_freeNodeIndex < MAX_NODE_NUMBER)
     {
@@ -66,6 +67,7 @@ void AST_Init(void)
  */
 ASTNode* AST_CreateNode(Parser * parser, ASTNodeType type, ASTNode* left, ASTNode* right)
 {
+    ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
     DEBUG( printf("%s\n", __func__) );
 
     ASTNode* node = getNextFreeNode(parser);
@@ -87,6 +89,9 @@ ASTNode* AST_CreateNode(Parser * parser, ASTNodeType type, ASTNode* left, ASTNod
  */
 ASTNode* AST_CreateUnaryNode(Parser * parser, ASTNode* child)
 {
+    ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
+    DEBUG( printf("%s\n", __func__) );
+
     ASTNode* node = getNextFreeNode(parser);
 
     if (node)
@@ -107,6 +112,9 @@ ASTNode* AST_CreateUnaryNode(Parser * parser, ASTNode* child)
  */
 ASTNode* AST_CreateNodeBoolFunction(Parser * parser, uint8_t value)
 {
+    ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
+    DEBUG( printf("%s\n", __func__) );
+
     ASTNode* node = getNextFreeNode(parser);
 
     if (node)
@@ -126,6 +134,9 @@ ASTNode* AST_CreateNodeBoolFunction(Parser * parser, uint8_t value)
  */
 ASTNode* AST_CreateNodeBoolValue(Parser * parser, bool value)
 {
+    ON_PARSER_ERROR_EXIT_EARLY_WITH_RTN(parser, NULL);
+    DEBUG( printf("%s\n", __func__) );
+
     ASTNode* node = getNextFreeNode(parser);
 
     if (node)

@@ -1,6 +1,8 @@
 #ifndef _SYNTAX_PARSER_H_
 #define _SYNTAX_PARSER_H_
 
+#include "parser_types.h"
+
 /*
  * Defines and Typedefs
  */
@@ -14,43 +16,16 @@
 #define DEBUG(x) {}
 #endif
 
-enum TokenType
-{
-   Error,
-   And,
-   Or,
-   Not,
-   EndOfText,
-   OpenParenthesis,
-   ClosedParenthesis,
-   Number,
-   BoolChar
-};
-
-struct Token
-{
-   TokenType  Type;
-   uint8_t    Value;
-   char       Symbol;
-};
-
-struct Parser
-{
-    Token m_crtToken;
-    const char* m_Text;
-    size_t m_Index;
-    bool m_success;
-    char m_errorMessage[30];
-};
-
 typedef bool (*BOOLFUNCTION)(void);
+
+typedef struct astnode ASTNode;
 
 /*
  * Public Function Declarations
  */
 
 void LEP_Init(void);
-bool LEP_Evaluate(ASTNode* ast);
+bool LEP_Evaluate(ASTNode *);
 ASTNode * LEP_Parse(Parser * parser, const char* text);
 void LEP_RegisterFunction(uint8_t fid, BOOLFUNCTION fn);
 

@@ -1,29 +1,7 @@
 #ifndef _AST_NODE_H_
 #define _AST_NODE_H_
 
-/*
- * Defines and Typedefs
- */
-
-struct Parser; // Forward-declare the parser struct;
-
-enum ASTNodeType
-{
-   Undefined,
-   OperatorAnd,
-   OperatorOr,
-   UnaryNot,
-   FunctionID,
-   BoolValue
-};
-
-struct ASTNode
-{
-   ASTNodeType Type;
-   bool      Value;
-   ASTNode*    Left;
-   ASTNode*    Right;
-};
+#include "parser_types.h"
 
 /*
  * Public Function Declarations

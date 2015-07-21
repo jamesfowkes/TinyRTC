@@ -6,8 +6,6 @@
 #include <stdint.h>
 #include <iostream>
 
-#include "ast_node.h"
-#include "syntax_parser.h"
 #include "unity.h"
 
 static char const * s_pToTest = NULL;
@@ -23,7 +21,7 @@ static bool fFalse(void) { return false; }
 
 #define RUN_FAILURE_TEST(arg) \
    s_pToTest = arg; \
-   TestForParseFailure();
+   RUN_TEST(TestForParseFailure);
 
 void TestForParseSuccess(void)
 {
@@ -38,8 +36,7 @@ void TestForParseSuccess(void)
 void TestForParseFailure(void)
 {
    Parser parser;
-   ASTNode * pNode = LEP_Parse(&parser, s_pToTest);
-   TEST_ASSERT_NULL(pNode);
+   LEP_Parse(&parser, s_pToTest);
    TEST_ASSERT_FALSE(parser.m_success);
 }
 
