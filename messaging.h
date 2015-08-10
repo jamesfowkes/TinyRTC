@@ -14,7 +14,8 @@ enum message_id
     MSG_SET_IO_TYPE,
     MSG_READ_INPUT,
     MSG_RESET,
-    MSG_INVALID
+    MSG_INVALID,
+    MSG_MAX_ID
 };
 typedef enum message_id MESSAGE_ID;
 
@@ -43,7 +44,13 @@ typedef struct msg_handler_functions MSG_HANDLER_FUNCTIONS;
 class MessageHandler
 {
 	public:
-		MessageHandler(char * message, MSG_HANDLER_FUNCTIONS * callbacks);
+		MessageHandler(MSG_HANDLER_FUNCTIONS * callbacks);
+		bool handleMessage(char * message);
+
+	private:
+		bool setRTCFromMessage(char * message);
+
+		MSG_HANDLER_FUNCTIONS * m_callbacks;
 };
 
 #endif

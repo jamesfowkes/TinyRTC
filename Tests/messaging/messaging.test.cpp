@@ -4,131 +4,177 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <iostream>
+#include <string.h>
+#include <stdlib.h>
+
+#include <cppunit/extensions/TestFactoryRegistry.h>
+#include <cppunit/ui/text/TestRunner.h>
+#include <cppunit/extensions/HelperMacros.h>
 
 #include "messaging.h"
 #include "ast_node.h"
 #include "syntax_parser.h"
 
-#include "unity.h"
+static bool setRTC_callback(uint8_t yy, uint8_t mmm, uint8_t dd, uint8_t hh, uint8_t mm, uint8_t ss);
+static void getRTC_callback(void);
+static void setTimedAction_callback(void);
+static void clrTimedAction_callback(void);
+static void setIOType_callback(void);
+static void readInput_callback(void);
+static void reset_callback(void);
+static void invalid_callback(void);
+static void setTestObject(void* obj);
 
-static char const * s_pToTest = NULL;
-bool s_expected = false;
+class MessagingTest : public CppUnit::TestFixture  {
 
-static bool fTrue(void) { return true; }
-static bool fFalse(void) { return false; }
+   CPPUNIT_TEST_SUITE(MessagingTest);
+   CPPUNIT_TEST(SetRTCMessageTest);
+   CPPUNIT_TEST_SUITE_END();
 
-#define RUN_SUCCESS_TEST(arg, expected) \
-   s_pToTest = arg; \
-   s_expected = expected; \
-   RUN_TEST(TestForParseSuccess);
+public:
+   bool SetRTC_callback(uint8_t yy, uint8_t mmm, uint8_t dd, uint8_t hh, uint8_t mm, uint8_t ss)
+   {
+      m_callback_flags[MSG_SET_RTC] = true;
+      m_yy = yy;
+      m_mmm = mmm;
+      m_dd = dd;
+      m_hh = hh;
+      m_mm = mm;
+      m_ss = ss;
 
-#define RUN_FAILURE_TEST(arg) \
-   s_pToTest = arg; \
-   RUN_TEST(TestForParseFailure);
+      return true;
+   }
 
-void TestForParseSuccess(void)
+   void GetRTC_callback(void)
+   {
+      m_callback_flags[MSG_GET_RTC] = true;
+   }
+
+   void SetTimedAction_callback(void)
+   {
+      m_callback_flags[MSG_SET_TIMED_ACTION] = true;
+   }
+
+   void ClrTimedAction_callback(void)
+   {
+      m_callback_flags[MSG_CLEAR_TIMED_ACTION] = true;
+   }
+
+   void SetIOType_callback(void)
+   {
+      m_callback_flags[MSG_SET_IO_TYPE] = true;  
+   }
+
+   void ReadInput_callback(void)
+   {
+      m_callback_flags[MSG_READ_INPUT] = true;  
+   }
+
+   void Reset_callback(void)
+   {
+      m_callback_flags[MSG_RESET] = true;  
+   }
+
+   void Invalid_callback(void)
+   {
+      m_callback_flags[MSG_INVALID] = true;  
+   }
+
+   void setUp(void)
+   {
+      memset(m_callback_flags, false, MSG_MAX_ID);
+      m_messageHandler = new MessageHandler(&m_callbacks);
+
+      m_callbacks.setRTCfn = setRTC_callback;
+      m_callbacks.getRTCfn = getRTC_callback;
+      m_callbacks.getTimedActionfn = setTimedAction_callback;
+      m_callbacks.setIOTypefn = setIOType_callback;
+      m_callbacks.readInputfn = readInput_callback;
+      m_callbacks.resetfn = reset_callback;
+      m_callbacks.invalidfn = invalid_callback;
+
+      setTestObject(this);
+   }
+
+   void tearDown(void)
+   {
+      free(m_messageHandler);
+   }
+
+private:
+   
+   bool m_callback_flags[MSG_MAX_ID];
+
+   uint8_t m_yy, m_mmm, m_dd, m_hh, m_mm, m_ss;
+
+   MessageHandler * m_messageHandler;
+
+   MSG_HANDLER_FUNCTIONS m_callbacks;
+   
+protected:
+
+   void SetRTCMessageTest()
+   {
+      char message[] = {MSG_SET_RTC, 15, 8, 1, 18, 7, 34}; 
+      m_messageHandler->handleMessage(message);
+      CPPUNIT_ASSERT(m_callback_flags[MSG_SET_RTC]);
+   }
+};
+
+static MessagingTest * s_test_object;
+
+static void setTestObject(void* obj) { s_test_object = (MessagingTest *)obj; }
+
+static bool setRTC_callback(uint8_t yy, uint8_t mmm, uint8_t dd, uint8_t hh, uint8_t mm, uint8_t ss)
 {
-   Parser parser;
-   ASTNode * pNode = LEP_Parse(&parser, s_pToTest);
-   TEST_ASSERT_TRUE_MESSAGE(parser.m_success, parser.m_errorMessage);
-
-   bool actual = LEP_Evaluate(pNode);
-   TEST_ASSERT_EQUAL(s_expected, actual);
+   s_test_object->SetRTC_callback(yy, mmm, dd, hh, mm, ss);
 }
 
-void TestForParseFailure(void)
+static void getRTC_callback(void)
 {
-   Parser parser;
-   LEP_Parse(&parser, s_pToTest);
-   TEST_ASSERT_FALSE(parser.m_success);
+   s_test_object->GetRTC_callback();
+}
+
+static void setTimedAction_callback(void)
+{
+   s_test_object->SetTimedAction_callback();
+}
+
+static void clrTimedAction_callback(void)
+{
+   s_test_object->ClrTimedAction_callback();
+}
+
+static void setIOType_callback(void)
+{
+   s_test_object->SetIOType_callback();
+}
+
+static void readInput_callback(void)
+{
+   s_test_object->ReadInput_callback();
+}
+
+static void reset_callback(void)
+{
+   s_test_object->Reset_callback();
+}
+
+static void invalid_callback(void)
+{
+   s_test_object->Invalid_callback();
 }
 
 int main()
 {
-   UnityBegin("messaging.test.cpp");
+   CppUnit::TextUi::TestRunner runner;
+   
+   CPPUNIT_TEST_SUITE_REGISTRATION( MessagingTest );
 
-   LEP_Init();
+   CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
 
-   LEP_RegisterFunction(0, fFalse);
-   LEP_RegisterFunction(1, fTrue);
-
-   RUN_SUCCESS_TEST("F", false);
-   RUN_SUCCESS_TEST("T", true);
-   RUN_SUCCESS_TEST("0", false);
-   RUN_SUCCESS_TEST("1", true);
-
-   RUN_SUCCESS_TEST("0|0", false);
-   RUN_SUCCESS_TEST("0|1", true);
-   RUN_SUCCESS_TEST("1|0", true);
-   RUN_SUCCESS_TEST("1|1", true);
-  
-   RUN_SUCCESS_TEST("0&0", false);
-   RUN_SUCCESS_TEST("0&1", false);
-   RUN_SUCCESS_TEST("1&0", false);
-   RUN_SUCCESS_TEST("1&1", true);
-
-   RUN_SUCCESS_TEST("F|F", false);
-   RUN_SUCCESS_TEST("F|T", true);
-   RUN_SUCCESS_TEST("T|F", true);
-   RUN_SUCCESS_TEST("T|T", true);
-  
-   RUN_SUCCESS_TEST("F&F", false);
-   RUN_SUCCESS_TEST("F&T", false);
-   RUN_SUCCESS_TEST("T&F", false);
-   RUN_SUCCESS_TEST("T&T", true);
-
-   RUN_SUCCESS_TEST("0|T", true);
-   RUN_SUCCESS_TEST("0|F", false);
-   RUN_SUCCESS_TEST("1|T", true);
-   RUN_SUCCESS_TEST("1|F", true);
-   RUN_SUCCESS_TEST("0&T", false);
-   RUN_SUCCESS_TEST("0&F", false);
-   RUN_SUCCESS_TEST("1&T", true);
-   RUN_SUCCESS_TEST("1&F", false);
-
-   RUN_SUCCESS_TEST("!F", true);
-   RUN_SUCCESS_TEST("!T", false);
-
-   RUN_SUCCESS_TEST("!0", true);
-   RUN_SUCCESS_TEST("!1", false);
-
-   RUN_SUCCESS_TEST("!0|0", true);
-   RUN_SUCCESS_TEST("!0|1", true);
-   RUN_SUCCESS_TEST("!1|0", false);
-   RUN_SUCCESS_TEST("!1|1", true);
-
-   RUN_SUCCESS_TEST("!0&0", false);
-   RUN_SUCCESS_TEST("!0&1", true);
-   RUN_SUCCESS_TEST("!1&0", false);
-   RUN_SUCCESS_TEST("!1&1", false);
-
-   RUN_SUCCESS_TEST("!F|F", true);
-   RUN_SUCCESS_TEST("!F|T", true);
-   RUN_SUCCESS_TEST("!T|F", false);
-   RUN_SUCCESS_TEST("!T|T", true);
-
-   RUN_SUCCESS_TEST("!F&F", false);
-   RUN_SUCCESS_TEST("!F&T", true);
-   RUN_SUCCESS_TEST("!T&F", false);
-   RUN_SUCCESS_TEST("!T&T", false);
-
-   RUN_SUCCESS_TEST("(0)", false);
-   RUN_SUCCESS_TEST("(1)", true);
-
-   RUN_SUCCESS_TEST("(F)", false);
-   RUN_SUCCESS_TEST("(T)", true);
-
-   RUN_SUCCESS_TEST("(1)&(0|1)", true);
-   RUN_SUCCESS_TEST("(1)|(0&1)", true);
-   RUN_SUCCESS_TEST("(0)|(0&1)", false);
-
-   RUN_FAILURE_TEST("   1|2,5");
-   RUN_FAILURE_TEST("   1|2.5e2");
-   RUN_FAILURE_TEST("M1 & 2.5");
-   RUN_FAILURE_TEST("1 | 2.5.6");
-   RUN_FAILURE_TEST("1 || 2.5");
-   RUN_FAILURE_TEST("|1 & 2.5");
+   runner.addTest( registry.makeTest() );
+   runner.run();
 
    return 0;
 }
