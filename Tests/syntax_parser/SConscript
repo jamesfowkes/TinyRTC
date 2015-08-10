@@ -1,0 +1,7 @@
+Import('cpppath')
+objects = [
+	Object('syntax_parser.test.cpp', CPPPATH=cpppath),
+	Object('../../syntax_parser.c', CPPPATH=cpppath, CC='g++'),
+	Object('../../ast_node.c', CPPPATH=cpppath, CC='g++')
+]
+Return('objects')

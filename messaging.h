@@ -24,19 +24,19 @@ typedef void (*MSG_SET_TIMED_ACTION_FN)(void);
 typedef void (*MSG_CLR_TIMED_ACTION_FN)(void);
 typedef void (*MSG_SET_IO_TYPE_FN)(void);
 typedef void (*MSG_READ_INPUT_FN)(void);
-typedef void (*MSG_RESET)(void);
-typedef void (*MSG_INVALID)(void);
+typedef void (*MSG_RESET_FN)(void);
+typedef void (*MSG_INVALID_FN)(void);
 
 struct msg_handler_functions
 {
-	MSG_SET_RTC_FN,
-	MSG_GET_RTC_FN,
-	MSG_SET_TIMED_ACTION_FN,
-	MSG_CLR_TIMED_ACTION_FN,
-	MSG_SET_IO_TYPE_FN,
-	MSG_READ_INPUT_FN,
-	MSG_RESET,
-	MSG_INVALID
+	MSG_SET_RTC_FN setRTCfn;
+	MSG_GET_RTC_FN getRTCfn;
+	MSG_SET_TIMED_ACTION_FN setTimedActionfn;
+	MSG_CLR_TIMED_ACTION_FN getTimedActionfn;
+	MSG_SET_IO_TYPE_FN setIOTypefn;
+	MSG_READ_INPUT_FN readInputfn;
+	MSG_RESET_FN resetfn;
+	MSG_INVALID_FN invalidfn;
 };
 typedef struct msg_handler_functions MSG_HANDLER_FUNCTIONS;
 

@@ -1,0 +1,8 @@
+Import('cpppath', 'cppdefines')
+objects = [
+	Object('messaging.test.cpp', CPPPATH=cpppath, CPPDEFINES=cppdefines),
+	Object('../../messaging.c', CPPPATH=cpppath, CPPDEFINES=cppdefines, CC='g++'),
+	Object('../../syntax_parser.c', CPPPATH=cpppath, CPPDEFINES=cppdefines, CC='g++'),
+	Object('../../ast_node.c', CPPPATH=cpppath, CPPDEFINES=cppdefines, CC='g++')
+]
+Return('objects')

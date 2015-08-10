@@ -1,0 +1,19 @@
+import os
+
+env = Environment(ENV=os.environ)
+
+unity_path = env['ENV']['UNITY_PATH']
+library_path = env['ENV']['CODE_LIBRARY_PATH']
+cpppath = [unity_path, "#../", library_path]
+cppdefines = ['-DUNIX_TIME_TYPE=uint64_t']
+
+unity = SConscript(unity_path+'/SConscript')
+
+for target in COMMAND_LINE_TARGETS:
+	conscript = target+"/SConscript"
+	test_objects = SConscript(conscript, exports='cpppath cppdefines')
+
+	program = env.Program(test_objects, LIBS=['unity'], LIBPATH=unity_path, CC='g++')
+	target_cmd = "./{0}/{0}.test".format(target)
+	test_alias = env.Alias(target, [program], program[0].path)
+	env.AlwaysBuild(test_alias)

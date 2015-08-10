@@ -6,6 +6,10 @@
 #include <stdint.h>
 #include <iostream>
 
+#include "messaging.h"
+#include "ast_node.h"
+#include "syntax_parser.h"
+
 #include "unity.h"
 
 static char const * s_pToTest = NULL;
@@ -42,7 +46,7 @@ void TestForParseFailure(void)
 
 int main()
 {
-   UnityBegin("syntax_parser.test.cpp");
+   UnityBegin("messaging.test.cpp");
 
    LEP_Init();
 
