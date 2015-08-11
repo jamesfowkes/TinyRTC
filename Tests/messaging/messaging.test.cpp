@@ -111,28 +111,78 @@ private:
    MessageHandler * m_messageHandler;
 
    MSG_HANDLER_FUNCTIONS m_callbacks;
-   
+
+   int callbackSetCount()
+   {
+      uint8_t count = 0;
+
+      for(int i =0; i < MSG_MAX_ID; ++i)
+      {
+         if (m_callback_flags[i]) { count++; }
+      }
+
+      return count;
+   }
+
 protected:
 
    void ValidSetRTCMessageTest()
    {
-      char message[] = {
-         MSG_SET_RTC,
-         '1','5',
-         '-',
-         '0','8',
-         '-',
-         '0','1',
-         ' ',
-         '1','8',
-         ':',
-         '0','7',
-         ':',
-         '3','4',
-         '\0'
-      };
+      char message[19] = {MSG_SET_RTC};
+      memcpy(&message[1], "15-08-01 18:07:37", 18);
       m_messageHandler->handleMessage(message);
       CPPUNIT_ASSERT(m_callback_flags[MSG_SET_RTC]);
+
+      CPPUNIT_ASSERT_EQUAL((uint8_t)15, m_yy);
+      CPPUNIT_ASSERT_EQUAL((uint8_t)8, m_mmm);
+      CPPUNIT_ASSERT_EQUAL((uint8_t)1, m_dd);
+      CPPUNIT_ASSERT_EQUAL((uint8_t)18, m_hh);
+      CPPUNIT_ASSERT_EQUAL((uint8_t)07, m_mm);
+      CPPUNIT_ASSERT_EQUAL((uint8_t)37, m_ss);
+
+      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
+   }
+
+   void InvalidSetRTCMessageTest()
+   {
+      char message[19] = {MSG_SET_RTC};
+      memcpy(&message[1], "15-00-01 18:07:37", 18); // Bad month (< 1)
+      m_messageHandler->handleMessage(message);
+      CPPUNIT_ASSERT(!m_callback_flags[MSG_SET_RTC]);
+
+      memcpy(&message[1], "15-13-01 18:07:37", 18); // Bad month (> 12)
+      m_messageHandler->handleMessage(message);
+      CPPUNIT_ASSERT(!m_callback_flags[MSG_SET_RTC]);
+
+      memcpy(&message[1], "15-08-00 18:07:37", 18); // Bad date (< 1)
+      m_messageHandler->handleMessage(message);
+      CPPUNIT_ASSERT(!m_callback_flags[MSG_SET_RTC]);
+
+      memcpy(&message[1], "15-02-29 18:07:37", 18); // Bad date (> 28 for February)
+      m_messageHandler->handleMessage(message);
+      CPPUNIT_ASSERT(!m_callback_flags[MSG_SET_RTC]);
+   
+      memcpy(&message[1], "15-04-31 18:07:37", 18); // Bad date (> 30 for April)
+      m_messageHandler->handleMessage(message);
+      CPPUNIT_ASSERT(!m_callback_flags[MSG_SET_RTC]);
+
+      memcpy(&message[1], "15-01-32 18:07:37", 18); // Bad date (> 31 for January)
+      m_messageHandler->handleMessage(message);
+      CPPUNIT_ASSERT(!m_callback_flags[MSG_SET_RTC]);
+
+      memcpy(&message[1], "15-01-01 24:07:37", 18); // Bad time (> 23 for hour)
+      m_messageHandler->handleMessage(message);
+      CPPUNIT_ASSERT(!m_callback_flags[MSG_SET_RTC]);
+   
+      memcpy(&message[1], "15-01-01 18:60:37", 18); // Bad time (> 59 for minute)
+      m_messageHandler->handleMessage(message);
+      CPPUNIT_ASSERT(!m_callback_flags[MSG_SET_RTC]);
+
+      memcpy(&message[1], "15-01-01 18:07:60", 18); // Bad time (> 59 for second)
+      m_messageHandler->handleMessage(message);
+      CPPUNIT_ASSERT(!m_callback_flags[MSG_SET_RTC]);
+
+      CPPUNIT_ASSERT_EQUAL(0, callbackSetCount());
    }
 };
 

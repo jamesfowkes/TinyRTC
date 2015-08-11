@@ -119,9 +119,9 @@ bool MessageHandler::setRTCFromMessage(char * message)
     
     // Validate month, date, hour, minute and second
     GREGORIAN_YEAR fourDigitYear = 2000 + dateParts[0];
-    int daysInMonth = days_in_month(dateParts[1], is_leap_year(fourDigitYear));
-    if (dateParts[1] > 12) { return false; }
-    if (dateParts[2] > daysInMonth) { return false; }
+    int daysInMonth = days_in_month(dateParts[1]-1, is_leap_year(fourDigitYear));
+    if ((dateParts[1] > 12)|| (dateParts[1] == 0)) { return false; } // Month between 1 and 12
+    if ((dateParts[2] > daysInMonth) || (dateParts[2] == 0)) { return false; } // Date between 1 and <days in month>
     if (dateParts[3] > 23) { return false; }
     if (dateParts[4] > 59) { return false; }
     if (dateParts[5] > 59) { return false; }
