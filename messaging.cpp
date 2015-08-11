@@ -29,7 +29,7 @@ static bool messageIsCorrectRTCFormat(char * message)
     valid &= message[5] == '-';
     valid &= message[8] == ' ';
     valid &= message[11] == ':';
-    valid &= message[13] == ':';
+    valid &= message[14] == ':';
     
     return valid;
 }
@@ -108,7 +108,7 @@ bool MessageHandler::setRTCFromMessage(char * message)
 
     uint8_t dateParts[6]; // Holds yy, mmm, dd, hh, mm, ss
     if (!messageIsCorrectRTCFormat(message)) { return false; }
-    
+
     // Convert each part of the message to integer
     if (!parseMessageToDatePart(&dateParts[0], message[0], message[1])) { return false; }
     if (!parseMessageToDatePart(&dateParts[1], message[3], message[4])) { return false; }
@@ -125,7 +125,7 @@ bool MessageHandler::setRTCFromMessage(char * message)
     if (dateParts[3] > 23) { return false; }
     if (dateParts[4] > 59) { return false; }
     if (dateParts[5] > 59) { return false; }
-    
+
     // Got this far, everything is valid
     result = m_callbacks->setRTCfn(dateParts[0], dateParts[1], dateParts[2], dateParts[3], dateParts[4], dateParts[5]);
 

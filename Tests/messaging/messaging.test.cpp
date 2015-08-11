@@ -28,7 +28,8 @@ static void setTestObject(void* obj);
 class MessagingTest : public CppUnit::TestFixture  {
 
    CPPUNIT_TEST_SUITE(MessagingTest);
-   CPPUNIT_TEST(SetRTCMessageTest);
+   CPPUNIT_TEST(ValidSetRTCMessageTest);
+   CPPUNIT_TEST(InvalidSetRTCMessageTest);
    CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -113,9 +114,23 @@ private:
    
 protected:
 
-   void SetRTCMessageTest()
+   void ValidSetRTCMessageTest()
    {
-      char message[] = {MSG_SET_RTC, 15, 8, 1, 18, 7, 34}; 
+      char message[] = {
+         MSG_SET_RTC,
+         '1','5',
+         '-',
+         '0','8',
+         '-',
+         '0','1',
+         ' ',
+         '1','8',
+         ':',
+         '0','7',
+         ':',
+         '3','4',
+         '\0'
+      };
       m_messageHandler->handleMessage(message);
       CPPUNIT_ASSERT(m_callback_flags[MSG_SET_RTC]);
    }

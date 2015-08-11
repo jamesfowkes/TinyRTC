@@ -2,14 +2,13 @@ import os
 
 env = Environment(ENV=os.environ)
 
-unity_path = env['ENV']['UNITY_PATH']
 library_path = env['ENV']['CODE_LIBRARY_PATH']
 cpppath = ["#../", library_path]
 cppdefines = ['-DUNIX_TIME_TYPE=uint64_t']
 
 for target in COMMAND_LINE_TARGETS:
 	conscript = target+"/SConscript"
-	test_objects = SConscript(conscript, exports='cpppath cppdefines')
+	test_objects = SConscript(conscript, exports='cpppath cppdefines library_path')
 
 	program = env.Program(test_objects, LIBS=['cppunit'], CC='g++')
 	target_cmd = "./{0}/{0}.test".format(target)
