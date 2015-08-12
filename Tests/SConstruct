@@ -3,10 +3,11 @@ import os
 env = Environment(ENV=os.environ)
 
 library_path = env['ENV']['CODE_LIBRARY_PATH']
-cpppath = ["#../", library_path]
 cppdefines = ['-DUNIX_TIME_TYPE=uint64_t']
 
 for target in COMMAND_LINE_TARGETS:
+
+	cpppath = ["#../", library_path, "#./" + target]
 	conscript = target+"/SConscript"
 	test_objects = SConscript(conscript, exports='cpppath cppdefines library_path')
 

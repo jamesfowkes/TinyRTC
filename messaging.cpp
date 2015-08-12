@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 
 /*
  * Code Library Includes
@@ -16,7 +17,10 @@
  * Application Includes
  */
 
+#include "app.rtc.h"
 #include "messaging.h"
+
+static char s_reply[MAX_MESSAGE_LENGTH];
 
 static bool messageIsCorrectRTCFormat(char * message)
 {
@@ -77,7 +81,7 @@ bool MessageHandler::handleMessage(char * message)
         result = setRTCFromMessage(&message[1]);
         break;
     case MSG_GET_RTC:
-        result = false;//printRTC();
+        result = getRTC();
         break;
     case MSG_SET_TIMED_ACTION:
         result = false;//setTimedActionFromMessage(&message[1]);
@@ -130,4 +134,53 @@ bool MessageHandler::setRTCFromMessage(char * message)
     result = m_callbacks->setRTCfn(dateParts[0], dateParts[1], dateParts[2], dateParts[3], dateParts[4], dateParts[5]);
 
     return result;
+}
+
+bool MessageHandler::getRTC()
+{
+    if (!m_callbacks->replyfn) { return false; }
+
+    TM tm;
+    APP_GetRTCDatetime(&tm);
+
+    char c = 0;
+    
+    //Header
+    s_reply[c++] = MSG_REPLY;
+    s_reply[c++] = MSG_GET_RTC;
+    
+    // yy
+    s_reply[c++] = (tm.tm_year / 10) + '0';
+    s_reply[c++] = (tm.tm_year % 10) + '0';
+    s_reply[c++] = '-';
+
+    // mmm
+    s_reply[c++] = (tm.tm_mon / 10) + '0';
+    s_reply[c++] = (tm.tm_mon % 10) + '0';
+    s_reply[c++] = '-';
+
+    // dd
+    s_reply[c++] = (tm.tm_mday / 10) + '0';
+    s_reply[c++] = (tm.tm_mday % 10) + '0';
+    s_reply[c++] = ' ';
+
+    // hh
+    s_reply[c++] = (tm.tm_hour / 10) + '0';
+    s_reply[c++] = (tm.tm_hour % 10) + '0';
+    s_reply[c++] = ':';
+
+    // mm
+    s_reply[c++] = (tm.tm_min / 10) + '0';
+    s_reply[c++] = (tm.tm_min % 10) + '0';
+    s_reply[c++] = ':';
+
+    // ss
+    s_reply[c++] = (tm.tm_sec / 10) + '0';
+    s_reply[c++] = (tm.tm_sec % 10) + '0';
+    
+    s_reply[c++] = '\0';
+
+    m_callbacks->replyfn(s_reply);
+
+    return true;
 }

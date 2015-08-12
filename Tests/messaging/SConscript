@@ -1,6 +1,7 @@
 Import('cpppath', 'cppdefines', 'library_path')
 objects = [
 	Object('messaging.test.cpp', CPPPATH=cpppath, CPPDEFINES=cppdefines),
+	Object('app.rtc.cpp', CPPPATH=cpppath, CPPDEFINES=cppdefines),
 	Object('../../messaging.cpp', CPPPATH=cpppath, CPPDEFINES=cppdefines),
 	Object('../../syntax_parser.c', CPPPATH=cpppath, CPPDEFINES=cppdefines, CC='g++'),
 	Object('../../ast_node.c', CPPPATH=cpppath, CPPDEFINES=cppdefines, CC='g++'),
