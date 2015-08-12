@@ -11,11 +11,13 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include "Utility/util_time.h"
+
 #include "messaging.h"
 #include "ast_node.h"
 #include "syntax_parser.h"
 
-static bool setRTC_callback(uint8_t yy, uint8_t mmm, uint8_t dd, uint8_t hh, uint8_t mm, uint8_t ss);
+static bool setRTC_callback(TM* tm);
 static void setTimedAction_callback(void);
 static void clrTimedAction_callback(void);
 static void setIOType_callback(void);
@@ -35,15 +37,15 @@ class MessagingTest : public CppUnit::TestFixture  {
    CPPUNIT_TEST_SUITE_END();
 
 public:
-   bool SetRTC_callback(uint8_t yy, uint8_t mmm, uint8_t dd, uint8_t hh, uint8_t mm, uint8_t ss)
+   bool SetRTC_callback(TM* tm)
    {
       m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)] = true;
-      m_yy = yy;
-      m_mmm = mmm;
-      m_dd = dd;
-      m_hh = hh;
-      m_mm = mm;
-      m_ss = ss;
+      m_time.tm_year = tm->tm_year;
+      m_time.tm_mon = tm->tm_mon;
+      m_time.tm_mday = tm->tm_mday;
+      m_time.tm_hour = tm->tm_hour;
+      m_time.tm_min = tm->tm_min;
+      m_time.tm_sec = tm->tm_sec;
 
       return true;
    }
@@ -109,7 +111,7 @@ private:
    
    bool m_callback_flags[MSG_MAX_ID];
 
-   uint8_t m_yy, m_mmm, m_dd, m_hh, m_mm, m_ss;
+   TM m_time;
    std::string m_reply;
 
    MessageHandler * m_messageHandler;
@@ -137,12 +139,12 @@ protected:
       CPPUNIT_ASSERT(m_messageHandler->handleMessage(message));
       CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
 
-      CPPUNIT_ASSERT_EQUAL((uint8_t)15, m_yy);
-      CPPUNIT_ASSERT_EQUAL((uint8_t)8, m_mmm);
-      CPPUNIT_ASSERT_EQUAL((uint8_t)1, m_dd);
-      CPPUNIT_ASSERT_EQUAL((uint8_t)18, m_hh);
-      CPPUNIT_ASSERT_EQUAL((uint8_t)07, m_mm);
-      CPPUNIT_ASSERT_EQUAL((uint8_t)37, m_ss);
+      CPPUNIT_ASSERT_EQUAL(15, m_time.tm_year);
+      CPPUNIT_ASSERT_EQUAL(8, m_time.tm_mon);
+      CPPUNIT_ASSERT_EQUAL(1, m_time.tm_mday);
+      CPPUNIT_ASSERT_EQUAL(18, m_time.tm_hour);
+      CPPUNIT_ASSERT_EQUAL(07, m_time.tm_min);
+      CPPUNIT_ASSERT_EQUAL(37, m_time.tm_sec);
 
       CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
    }
@@ -211,9 +213,9 @@ static MessagingTest * s_test_object;
 
 static void setTestObject(void* obj) { s_test_object = (MessagingTest *)obj; }
 
-static bool setRTC_callback(uint8_t yy, uint8_t mmm, uint8_t dd, uint8_t hh, uint8_t mm, uint8_t ss)
+static bool setRTC_callback(TM*tm)
 {
-   s_test_object->SetRTC_callback(yy, mmm, dd, hh, mm, ss);
+   s_test_object->SetRTC_callback(tm);
 }
 
 static void setTimedAction_callback(void)

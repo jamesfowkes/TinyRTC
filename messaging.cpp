@@ -38,7 +38,7 @@ static bool messageIsCorrectRTCFormat(char * message)
     return valid;
 }
 
-static bool parseMessageToDatePart(uint8_t * pResult, char tensASCII, char unitsASCII)
+static bool parseMessageToDatePart(int * pResult, char tensASCII, char unitsASCII)
 {
     // Convert ASCII chars to actual value
     tensASCII -= '0';
@@ -110,28 +110,28 @@ bool MessageHandler::setRTCFromMessage(char * message)
 
     if (!m_callbacks->setRTCfn) { return false; }
 
-    uint8_t dateParts[6]; // Holds yy, mmm, dd, hh, mm, ss
+    TM newTime;
     if (!messageIsCorrectRTCFormat(message)) { return false; }
 
     // Convert each part of the message to integer
-    if (!parseMessageToDatePart(&dateParts[0], message[0], message[1])) { return false; }
-    if (!parseMessageToDatePart(&dateParts[1], message[3], message[4])) { return false; }
-    if (!parseMessageToDatePart(&dateParts[2], message[6], message[7])) { return false; }
-    if (!parseMessageToDatePart(&dateParts[3], message[9], message[10])) { return false; }
-    if (!parseMessageToDatePart(&dateParts[4], message[12], message[13])) { return false; }
-    if (!parseMessageToDatePart(&dateParts[5], message[15], message[16])) { return false; }
+    if (!parseMessageToDatePart(&newTime.tm_year, message[0], message[1])) { return false; }
+    if (!parseMessageToDatePart(&newTime.tm_mon, message[3], message[4])) { return false; }
+    if (!parseMessageToDatePart(&newTime.tm_mday, message[6], message[7])) { return false; }
+    if (!parseMessageToDatePart(&newTime.tm_hour, message[9], message[10])) { return false; }
+    if (!parseMessageToDatePart(&newTime.tm_min, message[12], message[13])) { return false; }
+    if (!parseMessageToDatePart(&newTime.tm_sec, message[15], message[16])) { return false; }
     
     // Validate month, date, hour, minute and second
-    GREGORIAN_YEAR fourDigitYear = 2000 + dateParts[0];
-    int daysInMonth = days_in_month(dateParts[1]-1, is_leap_year(fourDigitYear));
-    if ((dateParts[1] > 12)|| (dateParts[1] == 0)) { return false; } // Month between 1 and 12
-    if ((dateParts[2] > daysInMonth) || (dateParts[2] == 0)) { return false; } // Date between 1 and <days in month>
-    if (dateParts[3] > 23) { return false; }
-    if (dateParts[4] > 59) { return false; }
-    if (dateParts[5] > 59) { return false; }
+    GREGORIAN_YEAR fourDigitYear = 2000 + newTime.tm_year;
+    int daysInMonth = days_in_month(newTime.tm_mon-1, is_leap_year(fourDigitYear));
+    if ((newTime.tm_mon > 12)|| (newTime.tm_mon == 0)) { return false; } // Month between 1 and 12
+    if ((newTime.tm_mday > daysInMonth) || (newTime.tm_mday == 0)) { return false; } // Date between 1 and <days in month>
+    if (newTime.tm_hour > 23) { return false; }
+    if (newTime.tm_min > 59) { return false; }
+    if (newTime.tm_sec > 59) { return false; }
 
     // Got this far, everything is valid
-    result = m_callbacks->setRTCfn(dateParts[0], dateParts[1], dateParts[2], dateParts[3], dateParts[4], dateParts[5]);
+    result = m_callbacks->setRTCfn(&newTime);
 
     return result;
 }
@@ -177,7 +177,7 @@ bool MessageHandler::getRTC()
     // ss
     s_reply[c++] = (tm.tm_sec / 10) + '0';
     s_reply[c++] = (tm.tm_sec % 10) + '0';
-    
+
     s_reply[c++] = '\0';
 
     m_callbacks->replyfn(s_reply);

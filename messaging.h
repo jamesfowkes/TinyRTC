@@ -28,7 +28,7 @@ typedef enum message_id MESSAGE_ID;
 #define MSG_ID_IDX(id) (id - '0')
 #define MSG_MAX_ID MSG_ID_IDX(_MSG_MAX_ID)
 
-typedef bool (*MSG_SET_RTC_FN)(uint8_t yy, uint8_t mmm, uint8_t dd, uint8_t hh, uint8_t mm, uint8_t ss);
+typedef bool (*MSG_SET_RTC_FN)(TM* tm);
 typedef void (*MSG_SET_TIMED_ACTION_FN)(void);
 typedef void (*MSG_CLR_TIMED_ACTION_FN)(void);
 typedef void (*MSG_SET_IO_TYPE_FN)(void);
