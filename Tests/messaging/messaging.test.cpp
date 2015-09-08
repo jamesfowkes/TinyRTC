@@ -35,6 +35,7 @@ class MessagingTest : public CppUnit::TestFixture  {
    CPPUNIT_TEST(ValidSetRTCMessageTest);
    CPPUNIT_TEST(InvalidSetRTCMessageTest);
    CPPUNIT_TEST(GetRTCMessageTest);
+   CPPUNIT_TEST(SetAlarmMessageTestWithWeeklyInterval);
    CPPUNIT_TEST(SetAlarmMessageTestWithFullDatetime);
    CPPUNIT_TEST(SetAlarmMessageTestWithPartialDatetime);
    CPPUNIT_TEST(SetAlarmMessageTestWithNoDatetime);
@@ -221,6 +222,23 @@ protected:
       CPPUNIT_ASSERT_EQUAL(23, (int)m_reply.length());
    }
 
+   void SetAlarmMessageTestWithWeeklyInterval()
+   {
+      // Special case with different format to other intervals
+      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
+      strncpy(&message[1], "01 01W TUE 03:45", MAX_MESSAGE_LENGTH);
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+
+      CPPUNIT_ASSERT_EQUAL(1, m_alarmID);
+      CPPUNIT_ASSERT_EQUAL((uint16_t)1, m_alarm.repeat);
+      CPPUNIT_ASSERT_EQUAL((int)TUE, m_alarm.datetime.tm_wday);
+      CPPUNIT_ASSERT_EQUAL(3, m_alarm.datetime.tm_hour);
+      CPPUNIT_ASSERT_EQUAL(45, m_alarm.datetime.tm_min);
+
+      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
+      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
+   }
+
    void SetAlarmMessageTestWithFullDatetime()
    {
       char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
@@ -302,6 +320,28 @@ protected:
    }
 
    void SetAlarmMessageTestActionID()
+   {
+      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
+
+      strncpy(&message[1], "02 01Y", MAX_MESSAGE_LENGTH);
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      CPPUNIT_ASSERT_EQUAL(2, m_alarmID);
+ 
+      strncpy(&message[1], "03 01Y", MAX_MESSAGE_LENGTH);
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      CPPUNIT_ASSERT_EQUAL(3, m_alarmID);
+
+      strncpy(&message[1], "16 01Y", MAX_MESSAGE_LENGTH);
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      CPPUNIT_ASSERT_EQUAL(16, m_alarmID);
+
+      // Invalid action ID
+      strncpy(&message[1], "17 01Y", MAX_MESSAGE_LENGTH);
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
+      CPPUNIT_ASSERT_EQUAL(16, m_alarmID);
+   }
+
+   void SetAlarmMessageTestRepeatCount()
    {
       char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
 

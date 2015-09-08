@@ -282,6 +282,22 @@ static bool parse_datetime_for_interval(char interval, char * datetime_str, TM *
         }
     }
 
+    if (interval == INTERVAL_WEEK)
+    {
+        // Special case where formatting is DDD hh:mm where DDD is three-letter day.
+        if (length >= 3)
+        {
+            if (!parse_chars_to_day(&datetime->tm_wday, datetime_str)) { return false; }
+            // Next, try to parse as a daily interval (which will just be hh:mm)
+            interval = INTERVAL_DAY;
+            datetime_str += 3; // Skip over month
+            length -= 3;
+            if (length && (*datetime_str != ' ')) { return false; } // Check for space if string continues
+            datetime_str += 1; // Skip over space
+            length -= 1;
+        }
+    }
+
     if (interval == INTERVAL_DAY)
     {
         if (length >= 2)
