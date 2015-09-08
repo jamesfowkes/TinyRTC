@@ -24,6 +24,7 @@ void APP_GetRTCDatetime(TM * tm)
 	tm->tm_min = 42;
 	tm->tm_hour = 17;
 	tm->tm_mday = 21;
-	tm->tm_mon = 4;
+	tm->tm_mon = 4; // This is MAY, not April! (0 - 11 months)
 	tm->tm_year = 13;
+	tm->tm_wday = 2; // Tuesday
 }

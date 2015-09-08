@@ -12,10 +12,10 @@
 
 enum message_id
 {
-    MSG_SET_RTC = '0',
+    MSG_SET_RTC = 'A',
     MSG_GET_RTC,
-    MSG_SET_TIMED_ACTION,
-    MSG_CLEAR_TIMED_ACTION,
+    MSG_SET_ALARM,
+    MSG_CLEAR_ALARM,
     MSG_SET_IO_TYPE,
     MSG_READ_INPUT,
     MSG_RESET,
@@ -29,19 +29,19 @@ typedef enum message_id MESSAGE_ID;
 #define MSG_MAX_ID MSG_ID_IDX(_MSG_MAX_ID)
 
 typedef bool (*MSG_SET_RTC_FN)(TM* tm);
-typedef void (*MSG_SET_TIMED_ACTION_FN)(void);
-typedef void (*MSG_CLR_TIMED_ACTION_FN)(void);
+typedef bool (*MSG_SET_ALARM_FN)(int actionID, ALARM * pAlarm);
+typedef void (*MSG_CLR_ALARM_FN)(void);
 typedef void (*MSG_SET_IO_TYPE_FN)(void);
 typedef void (*MSG_READ_INPUT_FN)(void);
 typedef void (*MSG_RESET_FN)(void);
 typedef void (*MSG_INVALID_FN)(void);
-typedef void (*MSG_REPLY_FN)(char * buffer);
+typedef bool (*MSG_REPLY_FN)(char * buffer);
 
 struct msg_handler_functions
 {
 	MSG_SET_RTC_FN setRTCfn;
-	MSG_SET_TIMED_ACTION_FN setTimedActionfn;
-	MSG_CLR_TIMED_ACTION_FN getTimedActionfn;
+	MSG_SET_ALARM_FN setAlarmfn;
+	MSG_CLR_ALARM_FN clrAlarmfn;
 	MSG_SET_IO_TYPE_FN setIOTypefn;
 	MSG_READ_INPUT_FN readInputfn;
 	MSG_RESET_FN resetfn;
@@ -59,6 +59,7 @@ class MessageHandler
 	private:
 		bool setRTCFromMessage(char * message);
 		bool getRTC();
+		bool setAlarmFromMessage(char * message);
 
 		MSG_HANDLER_FUNCTIONS * m_callbacks;
 };

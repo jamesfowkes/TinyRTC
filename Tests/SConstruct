@@ -3,7 +3,7 @@ import os
 env = Environment(ENV=os.environ)
 
 library_path = env['ENV']['CODE_LIBRARY_PATH']
-cppdefines = ['-DUNIX_TIME_TYPE=uint64_t']
+cppdefines = ['UNIX_TIME_TYPE=uint64_t', 'TEST']
 
 for target in COMMAND_LINE_TARGETS:
 
