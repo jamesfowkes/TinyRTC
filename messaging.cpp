@@ -85,18 +85,18 @@ static bool message_is_correct_rtc_format(char * message)
 {
     // Date time format is YY-MM-DD hh:mm:ss
     // This function only validates FORMAT, not content
-    DT_FORMAT_STRING * messageAsTime = (DT_FORMAT_STRING * )message;
+    DT_FORMAT_STRING * message_as_time = (DT_FORMAT_STRING * )message;
 
     bool valid = true;
     
     valid &= strlen(message) == sizeof(DT_FORMAT_STRING);
 
-    valid &= messageAsTime->hyphen1 == '-';
-    valid &= messageAsTime->hyphen2 == '-';
-    valid &= messageAsTime->space1 == ' ';
-    valid &= messageAsTime->space2 == ' ';
-    valid &= messageAsTime->colon1 == ':';
-    valid &= messageAsTime->colon2 == ':';
+    valid &= message_as_time->hyphen1 == '-';
+    valid &= message_as_time->hyphen2 == '-';
+    valid &= message_as_time->space1 == ' ';
+    valid &= message_as_time->space2 == ' ';
+    valid &= message_as_time->colon1 == ':';
+    valid &= message_as_time->colon2 == ':';
     return valid;
 }
 
@@ -110,32 +110,32 @@ static bool three_char_cmp(char const * const p1, char const * const p2)
     return same;
 }
 
-static bool parse_chars_to_day(int * pResult, char * threeCharDay)
+static bool parse_chars_to_day(int * pResult, char * three_char_day)
 {
     // Sets pResult to 0 for SUN, 1 for MON etc. Returns false if not a day string.
     if (!pResult) { return false; }
 
-    if (three_char_cmp(threeCharDay, "SUN")) { *pResult = 0; return true; }
-    if (three_char_cmp(threeCharDay, "MON")) { *pResult = 1; return true; }
-    if (three_char_cmp(threeCharDay, "TUE")) { *pResult = 2; return true; }
-    if (three_char_cmp(threeCharDay, "WED")) { *pResult = 3; return true; }
-    if (three_char_cmp(threeCharDay, "THU")) { *pResult = 4; return true; }
-    if (three_char_cmp(threeCharDay, "FRI")) { *pResult = 5; return true; }
-    if (three_char_cmp(threeCharDay, "SAT")) { *pResult = 6; return true; }
+    if (three_char_cmp(three_char_day, "SUN")) { *pResult = 0; return true; }
+    if (three_char_cmp(three_char_day, "MON")) { *pResult = 1; return true; }
+    if (three_char_cmp(three_char_day, "TUE")) { *pResult = 2; return true; }
+    if (three_char_cmp(three_char_day, "WED")) { *pResult = 3; return true; }
+    if (three_char_cmp(three_char_day, "THU")) { *pResult = 4; return true; }
+    if (three_char_cmp(three_char_day, "FRI")) { *pResult = 5; return true; }
+    if (three_char_cmp(three_char_day, "SAT")) { *pResult = 6; return true; }
 
     return false;
 }
 
-static bool parse_two_chars_to_int(int * pResult, char * twoCharNumber, int * range = NULL)
+static bool parse_two_chars_to_int(int * pResult, char * two_char_number, int * range = NULL)
 {
     // Convert ASCII chars to actual value
 
-    if (!pResult || !twoCharNumber) { return false; }
+    if (!pResult || !two_char_number) { return false; }
 
-    twoCharNumber[0] -= '0';
-    twoCharNumber[1] -= '0';
+    two_char_number[0] -= '0';
+    two_char_number[1] -= '0';
 
-    uint16_t result = (twoCharNumber[0] * 10) + twoCharNumber[1];
+    uint16_t result = (two_char_number[0] * 10) + two_char_number[1];
 
     bool valid = true;
     
@@ -182,37 +182,37 @@ static void weekday_to_weekday_string(int wday, char * str)
     }
 }
 
-static bool time_to_datetime_string(TM* pTime, DT_FORMAT_STRING * dtString)
+static bool time_to_datetime_string(TM* pTime, DT_FORMAT_STRING * dt_string)
 {
     if (!pTime) { return false; }
-    if (!dtString) { return false; }
+    if (!dt_string) { return false; }
 
-    dtString->hyphen1 = '-';
-    dtString->hyphen2 = '-';
-    dtString->space1 = ' ';
-    dtString->space2 = ' ';
-    dtString->colon1 = ':';
-    dtString->colon2 = ':';
+    dt_string->hyphen1 = '-';
+    dt_string->hyphen2 = '-';
+    dt_string->space1 = ' ';
+    dt_string->space2 = ' ';
+    dt_string->colon1 = ':';
+    dt_string->colon2 = ':';
 
-    weekday_to_weekday_string(pTime->tm_wday, dtString->day);
+    weekday_to_weekday_string(pTime->tm_wday, dt_string->day);
 
-    dtString->year[0] = (pTime->tm_year / 10) + '0';
-    dtString->year[1] = (pTime->tm_year % 10) + '0';
+    dt_string->year[0] = (pTime->tm_year / 10) + '0';
+    dt_string->year[1] = (pTime->tm_year % 10) + '0';
 
-    dtString->month[0] = (pTime->tm_mon / 10) + '0';
-    dtString->month[1] = (pTime->tm_mon % 10) + '0';
+    dt_string->month[0] = (pTime->tm_mon / 10) + '0';
+    dt_string->month[1] = (pTime->tm_mon % 10) + '0';
 
-    dtString->date[0] = (pTime->tm_mday / 10) + '0';
-    dtString->date[1] = (pTime->tm_mday % 10) + '0';
+    dt_string->date[0] = (pTime->tm_mday / 10) + '0';
+    dt_string->date[1] = (pTime->tm_mday % 10) + '0';
 
-    dtString->hour[0] = (pTime->tm_hour / 10) + '0';
-    dtString->hour[1] = (pTime->tm_hour % 10) + '0';
+    dt_string->hour[0] = (pTime->tm_hour / 10) + '0';
+    dt_string->hour[1] = (pTime->tm_hour % 10) + '0';
 
-    dtString->minute[0] = (pTime->tm_min / 10) + '0';
-    dtString->minute[1] = (pTime->tm_min % 10) + '0';
+    dt_string->minute[0] = (pTime->tm_min / 10) + '0';
+    dt_string->minute[1] = (pTime->tm_min % 10) + '0';
 
-    dtString->second[0] = (pTime->tm_sec / 10) + '0';
-    dtString->second[1] = (pTime->tm_sec % 10) + '0';
+    dt_string->second[0] = (pTime->tm_sec / 10) + '0';
+    dt_string->second[1] = (pTime->tm_sec % 10) + '0';
 
     return true;
 }
@@ -313,7 +313,7 @@ MessageHandler::MessageHandler(MSG_HANDLER_FUNCTIONS * callbacks)
     m_callbacks  = callbacks;
 }
 
-bool MessageHandler::handleMessage(char * message)
+bool MessageHandler::handle_message(char * message)
 {
     MESSAGE_ID id = (MESSAGE_ID)message[0];
     
@@ -324,13 +324,13 @@ bool MessageHandler::handleMessage(char * message)
     switch(id)
     {
     case MSG_SET_RTC:
-        result = setRTCFromMessage(&message[1]);
+        result = set_rtc_from_message(&message[1]);
         break;
     case MSG_GET_RTC:
-        result = getRTC();
+        result = get_rtc();
         break;
     case MSG_SET_ALARM:
-        result = setAlarmFromMessage(&message[1]);
+        result = set_alarm_from_message(&message[1]);
         break;
     case MSG_CLEAR_ALARM:
         result = false;//clearAlarmFromMessage(&message[1]);
@@ -350,45 +350,45 @@ bool MessageHandler::handleMessage(char * message)
     return result;
 }
 
-bool MessageHandler::setRTCFromMessage(char * message)
+bool MessageHandler::set_rtc_from_message(char * message)
 {
     bool result = false;
 
-    if (!m_callbacks->setRTCfn) { return false; }
+    if (!m_callbacks->set_rtc_fn) { return false; }
 
     TM new_time;
 
     if (!message_is_correct_rtc_format(message)) { return false; }
 
     // Convert each part of the message to integer
-    DT_FORMAT_STRING * messageAsTime = (DT_FORMAT_STRING*)message;
+    DT_FORMAT_STRING * message_as_time = (DT_FORMAT_STRING*)message;
 
-    if (!parse_chars_to_day(&new_time.tm_wday, messageAsTime->day)) { return false; }
-    if (!parse_two_chars_to_int(&new_time.tm_year, messageAsTime->year)) { return false; }
-    if (!parse_two_chars_to_int(&new_time.tm_mon, messageAsTime->month, textual_month_range)) { return false; }
-    if (!parse_two_chars_to_int(&new_time.tm_mday, messageAsTime->date)) { return false; }
-    if (!parse_two_chars_to_int(&new_time.tm_hour, messageAsTime->hour, hours_range)) { return false; }
-    if (!parse_two_chars_to_int(&new_time.tm_min, messageAsTime->minute, ms_range)) { return false; }
-    if (!parse_two_chars_to_int(&new_time.tm_sec, messageAsTime->second, ms_range)) { return false; }
+    if (!parse_chars_to_day(&new_time.tm_wday, message_as_time->day)) { return false; }
+    if (!parse_two_chars_to_int(&new_time.tm_year, message_as_time->year)) { return false; }
+    if (!parse_two_chars_to_int(&new_time.tm_mon, message_as_time->month, textual_month_range)) { return false; }
+    if (!parse_two_chars_to_int(&new_time.tm_mday, message_as_time->date)) { return false; }
+    if (!parse_two_chars_to_int(&new_time.tm_hour, message_as_time->hour, hours_range)) { return false; }
+    if (!parse_two_chars_to_int(&new_time.tm_min, message_as_time->minute, ms_range)) { return false; }
+    if (!parse_two_chars_to_int(&new_time.tm_sec, message_as_time->second, ms_range)) { return false; }
     
     new_time.tm_mon--; // Shift 1-12 month indexing to 0-11
 
     if (!days_in_month_valid(new_time.tm_mday, new_time.tm_mon, new_time.tm_year)) { return 0; }
 
     // Got this far, everything is valid
-    result = m_callbacks->setRTCfn(&new_time);
+    result = m_callbacks->set_rtc_fn(&new_time);
 
     return result;
 }
 
-bool MessageHandler::getRTC()
+bool MessageHandler::get_rtc()
 {
     bool result = false;
 
-    if (!m_callbacks->replyfn) { return false; }
+    if (!m_callbacks->reply_fn) { return false; }
 
     TM tm;
-    APP_GetRTCDatetime(&tm);
+    app_get_rtc_datetime(&tm);
 
     tm.tm_mon++; // Convert 0-11 to 1-12 for conversion to string date
     
@@ -400,12 +400,12 @@ bool MessageHandler::getRTC()
 
     time_to_datetime_string(&tm, (DT_FORMAT_STRING*)&s_reply[2]);
 
-    result = m_callbacks->replyfn(s_reply);
+    result = m_callbacks->reply_fn(s_reply);
 
     return result;
 }
 
-bool MessageHandler::setAlarmFromMessage(char * message)
+bool MessageHandler::set_alarm_from_message(char * message)
 {
     bool result = false;
     int action_id;
@@ -413,7 +413,7 @@ bool MessageHandler::setAlarmFromMessage(char * message)
     ALARM new_alarm;
     TM alarm_time;
 
-    if (!m_callbacks->setAlarmfn) { return false; }
+    if (!m_callbacks->set_alarm_fn) { return false; }
     
     SET_ALARM_FORMAT_STRING * message_as_set_alarm_string = (SET_ALARM_FORMAT_STRING*)message;
 
@@ -432,9 +432,9 @@ bool MessageHandler::setAlarmFromMessage(char * message)
 
     if (!days_in_month_valid(alarm_time.tm_mday, alarm_time.tm_mon, alarm_time.tm_year)) { return 0; }
 
-    result = ALARM_make(&new_alarm, (INTERVAL)message_as_set_alarm_string->interval, &alarm_time, repeat);
+    result = alarm_make(&new_alarm, (INTERVAL)message_as_set_alarm_string->interval, &alarm_time, repeat);
 
-    result &= m_callbacks->setAlarmfn(action_id, &new_alarm);
+    result &= m_callbacks->set_alarm_fn(action_id, &new_alarm);
 
     return result;
 }

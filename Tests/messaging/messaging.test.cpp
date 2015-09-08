@@ -18,16 +18,16 @@
 #include "ast_node.h"
 #include "syntax_parser.h"
 
-static bool setRTC_callback(TM* tm);
-static bool setAlarm_callback(int actionID, ALARM * pAlarm);
-static void clrAlarm_callback(void);
-static void setIOType_callback(void);
-static void readInput_callback(void);
+static bool set_rtc_callback(TM* tm);
+static bool set_alarm_callback(int actionID, ALARM * pAlarm);
+static void clr_alarm_callback(void);
+static void set_io_type_callback(void);
+static void read_input_callback(void);
 static void reset_callback(void);
 static void invalid_callback(void);
 static bool reply_callback(char * message);
 
-static void setTestObject(void* obj);
+static void set_test_object(void* obj);
 
 class MessagingTest : public CppUnit::TestFixture  {
 
@@ -44,14 +44,14 @@ class MessagingTest : public CppUnit::TestFixture  {
 
 public:
 
-   bool SetRTC_callback(TM* tm)
+   bool Set_rtc_callback(TM* tm)
    {
       m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)] = true;
       time_cpy(&m_time, tm);
       return true;
    }
 
-   bool SetAlarm_callback(int actionID, ALARM * pAlarm)
+   bool Set_alarm_callback(int actionID, ALARM * pAlarm)
    {
       m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)] = true;
       time_cpy(&(m_alarm.datetime), &(pAlarm->datetime));
@@ -60,17 +60,17 @@ public:
       return true;
    }
 
-   void ClrAlarm_callback(void)
+   void Clr_alarm_callback(void)
    {
       m_callback_flags[MSG_ID_IDX(MSG_CLEAR_ALARM)] = true;
    }
 
-   void SetIOType_callback(void)
+   void Set_io_type_callback(void)
    {
       m_callback_flags[MSG_ID_IDX(MSG_SET_IO_TYPE)] = true;  
    }
 
-   void ReadInput_callback(void)
+   void Read_input_callback(void)
    {
       m_callback_flags[MSG_ID_IDX(MSG_READ_INPUT)] = true;  
    }
@@ -95,22 +95,22 @@ public:
    void setUp(void)
    {
       memset(m_callback_flags, false, MSG_MAX_ID);
-      m_messageHandler = new MessageHandler(&m_callbacks);
+      m_message_handler = new MessageHandler(&m_callbacks);
 
-      m_callbacks.setRTCfn = setRTC_callback;
-      m_callbacks.setAlarmfn = setAlarm_callback;
-      m_callbacks.setIOTypefn = setIOType_callback;
-      m_callbacks.readInputfn = readInput_callback;
-      m_callbacks.resetfn = reset_callback;
-      m_callbacks.invalidfn = invalid_callback;
-      m_callbacks.replyfn = reply_callback;
+      m_callbacks.set_rtc_fn = set_rtc_callback;
+      m_callbacks.set_alarm_fn = set_alarm_callback;
+      m_callbacks.set_io_type_fn = set_io_type_callback;
+      m_callbacks.read_input_fn = read_input_callback;
+      m_callbacks.reset_fn = reset_callback;
+      m_callbacks.invalid_fn = invalid_callback;
+      m_callbacks.reply_fn = reply_callback;
 
-      setTestObject(this);
+      set_test_object(this);
    }
 
    void tearDown(void)
    {
-      free(m_messageHandler);
+      free(m_message_handler);
    }
 
 private:
@@ -122,7 +122,7 @@ private:
    ALARM m_alarm;
    int m_alarmID;
 
-   MessageHandler * m_messageHandler;
+   MessageHandler * m_message_handler;
 
    MSG_HANDLER_FUNCTIONS m_callbacks;
 
@@ -144,7 +144,7 @@ protected:
    {
       char message[MAX_MESSAGE_LENGTH] = {MSG_SET_RTC};
       strncpy(&message[1], "SAT 15-08-01 18:07:37", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
       CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
 
       CPPUNIT_ASSERT_EQUAL(15, m_time.tm_year);
@@ -162,43 +162,43 @@ protected:
    {
       char message[MAX_MESSAGE_LENGTH] = {MSG_SET_RTC};
       strncpy(&message[1], "SAT 15-00-01 18:07:37", MAX_MESSAGE_LENGTH); // Bad month (< 1)
-      CPPUNIT_ASSERT(!m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
       CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
 
       strncpy(&message[1], "SAT 15-13-01 18:07:37", MAX_MESSAGE_LENGTH); // Bad month (> 12)
-      CPPUNIT_ASSERT(!m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
       CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
 
       strncpy(&message[1], "SAT 15-08-00 18:07:37", MAX_MESSAGE_LENGTH); // Bad date (< 1)
-      CPPUNIT_ASSERT(!m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
       CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
 
       strncpy(&message[1], "SAT 15-02-29 18:07:37", MAX_MESSAGE_LENGTH); // Bad date (> 28 for February)
-      CPPUNIT_ASSERT(!m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
       CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
 
       strncpy(&message[1], "MAN 15-02-28 18:07:37", MAX_MESSAGE_LENGTH); // Bad day
-      CPPUNIT_ASSERT(!m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
       CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
 
       strncpy(&message[1], "SAT 15-04-31 18:07:37", MAX_MESSAGE_LENGTH); // Bad date (> 30 for April)
-      CPPUNIT_ASSERT(!m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
       CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
 
       strncpy(&message[1], "SAT 15-01-32 18:07:37", MAX_MESSAGE_LENGTH); // Bad date (> 31 for January)
-      CPPUNIT_ASSERT(!m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
       CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
 
       strncpy(&message[1], "SAT 15-01-01 24:07:37", MAX_MESSAGE_LENGTH); // Bad time (> 23 for hour)
-      CPPUNIT_ASSERT(!m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
       CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
    
       strncpy(&message[1], "SAT 15-01-01 18:60:37", MAX_MESSAGE_LENGTH); // Bad time (> 59 for minute)
-      CPPUNIT_ASSERT(!m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
       CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
 
       strncpy(&message[1], "SAT 15-01-01 18:07:60", MAX_MESSAGE_LENGTH); // Bad time (> 59 for second)
-      CPPUNIT_ASSERT(!m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
       CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
 
       CPPUNIT_ASSERT_EQUAL(0, callbackSetCount());
@@ -208,7 +208,7 @@ protected:
    {
       m_reply[0] = '\0';
       char message[MAX_MESSAGE_LENGTH] = {MSG_GET_RTC};
-      CPPUNIT_ASSERT(m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
 
       CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_REPLY)]);
       CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
@@ -225,7 +225,7 @@ protected:
    {
       char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
       strncpy(&message[1], "01 01Y 10-09 03:45", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
 
 
       CPPUNIT_ASSERT_EQUAL(1, m_alarmID);
@@ -243,7 +243,7 @@ protected:
    {
       char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
       strncpy(&message[1], "01 01Y 10-09", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
 
 
       CPPUNIT_ASSERT_EQUAL(1, m_alarmID);
@@ -261,7 +261,7 @@ protected:
    {
       char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
       strncpy(&message[1], "01 01Y", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
 
 
       CPPUNIT_ASSERT_EQUAL(1, m_alarmID);
@@ -280,22 +280,22 @@ protected:
    {
       char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
       strncpy(&message[1], "01 01A", MAX_MESSAGE_LENGTH); // Bad interval setting
-      CPPUNIT_ASSERT(!m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
 
       strncpy(&message[1], "01 01Y 13", MAX_MESSAGE_LENGTH); // Bad month setting
-      CPPUNIT_ASSERT(!m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
 
       strncpy(&message[1], "01 01Y 12-32", MAX_MESSAGE_LENGTH); // Bad date setting
-      CPPUNIT_ASSERT(!m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
 
       strncpy(&message[1], "01 01Y 12-31 24:00", MAX_MESSAGE_LENGTH); // Bad hour setting
-      CPPUNIT_ASSERT(!m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
           
       strncpy(&message[1], "01 01Y 12-31 23:60", MAX_MESSAGE_LENGTH); // Bad minute setting
-      CPPUNIT_ASSERT(!m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
 
       strncpy(&message[1], "01 01Y 12/31 2359", MAX_MESSAGE_LENGTH); // Malformed datetime string
-      CPPUNIT_ASSERT(!m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
 
       CPPUNIT_ASSERT_EQUAL(0, callbackSetCount());
       CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
@@ -306,51 +306,51 @@ protected:
       char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
 
       strncpy(&message[1], "02 01Y", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
       CPPUNIT_ASSERT_EQUAL(2, m_alarmID);
  
       strncpy(&message[1], "03 01Y", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
       CPPUNIT_ASSERT_EQUAL(3, m_alarmID);
 
       strncpy(&message[1], "16 01Y", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
       CPPUNIT_ASSERT_EQUAL(16, m_alarmID);
 
       // Invalid action ID
       strncpy(&message[1], "17 01Y", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(!m_messageHandler->handleMessage(message));
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
       CPPUNIT_ASSERT_EQUAL(16, m_alarmID);
    }
 };
 
 static MessagingTest * s_test_object;
 
-static void setTestObject(void* obj) { s_test_object = (MessagingTest *)obj; }
+static void set_test_object(void* obj) { s_test_object = (MessagingTest *)obj; }
 
-static bool setRTC_callback(TM*tm)
+static bool set_rtc_callback(TM*tm)
 {
-   return s_test_object->SetRTC_callback(tm);
+   return s_test_object->Set_rtc_callback(tm);
 }
 
-static bool setAlarm_callback(int actionID, ALARM * pAlarm)
+static bool set_alarm_callback(int actionID, ALARM * pAlarm)
 {
-   return s_test_object->SetAlarm_callback(actionID, pAlarm);
+   return s_test_object->Set_alarm_callback(actionID, pAlarm);
 }
 
-static void clrAlarm_callback(void)
+static void clr_alarm_callback(void)
 {
-   s_test_object->ClrAlarm_callback();
+   s_test_object->Clr_alarm_callback();
 }
 
-static void setIOType_callback(void)
+static void set_io_type_callback(void)
 {
-   s_test_object->SetIOType_callback();
+   s_test_object->Set_io_type_callback();
 }
 
-static void readInput_callback(void)
+static void read_input_callback(void)
 {
-   s_test_object->ReadInput_callback();
+   s_test_object->Read_input_callback();
 }
 
 static void reset_callback(void)

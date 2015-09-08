@@ -18,7 +18,7 @@
 
 #include "app.rtc.h"
  
-void APP_GetRTCDatetime(TM * tm)
+void app_get_rtc_datetime(TM * tm)
 {
 	tm->tm_sec = 23;
 	tm->tm_min = 42;

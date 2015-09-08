@@ -18,6 +18,6 @@ enum interval
 };
 typedef enum interval INTERVAL;
 
-bool ALARM_make(ALARM * alarm, INTERVAL interval, TM * time, uint16_t repeat);
+bool alarm_make(ALARM * alarm, INTERVAL interval, TM * time, uint16_t repeat);
 
 #endif

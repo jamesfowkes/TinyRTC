@@ -23,7 +23,7 @@
  * Private Functions
  */
 
-bool ALARM_make(ALARM * alarm, INTERVAL interval, TM * alarm_time, uint16_t repeat)
+bool alarm_make(ALARM * alarm, INTERVAL interval, TM * alarm_time, uint16_t repeat)
 {
 	if (!alarm) { return false; }
 	if (!alarm_time) { return false; }

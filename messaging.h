@@ -29,7 +29,7 @@ typedef enum message_id MESSAGE_ID;
 #define MSG_MAX_ID MSG_ID_IDX(_MSG_MAX_ID)
 
 typedef bool (*MSG_SET_RTC_FN)(TM* tm);
-typedef bool (*MSG_SET_ALARM_FN)(int actionID, ALARM * pAlarm);
+typedef bool (*MSG_SET_ALARM_FN)(int action_id, ALARM * pAlarm);
 typedef void (*MSG_CLR_ALARM_FN)(void);
 typedef void (*MSG_SET_IO_TYPE_FN)(void);
 typedef void (*MSG_READ_INPUT_FN)(void);
@@ -39,14 +39,14 @@ typedef bool (*MSG_REPLY_FN)(char * buffer);
 
 struct msg_handler_functions
 {
-	MSG_SET_RTC_FN setRTCfn;
-	MSG_SET_ALARM_FN setAlarmfn;
-	MSG_CLR_ALARM_FN clrAlarmfn;
-	MSG_SET_IO_TYPE_FN setIOTypefn;
-	MSG_READ_INPUT_FN readInputfn;
-	MSG_RESET_FN resetfn;
-	MSG_INVALID_FN invalidfn;
-	MSG_REPLY_FN replyfn;
+	MSG_SET_RTC_FN set_rtc_fn;
+	MSG_SET_ALARM_FN set_alarm_fn;
+	MSG_CLR_ALARM_FN clr_alarm_fn;
+	MSG_SET_IO_TYPE_FN set_io_type_fn;
+	MSG_READ_INPUT_FN read_input_fn;
+	MSG_RESET_FN reset_fn;
+	MSG_INVALID_FN invalid_fn;
+	MSG_REPLY_FN reply_fn;
 };
 typedef struct msg_handler_functions MSG_HANDLER_FUNCTIONS;
 
@@ -54,12 +54,12 @@ class MessageHandler
 {
 	public:
 		MessageHandler(MSG_HANDLER_FUNCTIONS * callbacks);
-		bool handleMessage(char * message);
+		bool handle_message(char * message);
 
 	private:
-		bool setRTCFromMessage(char * message);
-		bool getRTC();
-		bool setAlarmFromMessage(char * message);
+		bool set_rtc_from_message(char * message);
+		bool get_rtc();
+		bool set_alarm_from_message(char * message);
 
 		MSG_HANDLER_FUNCTIONS * m_callbacks;
 };

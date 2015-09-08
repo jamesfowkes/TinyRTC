@@ -1,6 +1,6 @@
 #ifndef _APPLICATION_H_
 #define _APPLICATION_H_
 
-bool APP_printRTC(void);
+bool app_print_rtc(void);
 
 #endif
