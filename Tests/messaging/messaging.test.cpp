@@ -41,6 +41,7 @@ class MessagingTest : public CppUnit::TestFixture  {
    CPPUNIT_TEST(SetAlarmMessageTestWithNoDatetime);
    CPPUNIT_TEST(SetAlarmMessageTestWithBadDatetime);
    CPPUNIT_TEST(SetAlarmMessageTestActionID);
+   CPPUNIT_TEST(SetAlarmMessageTestRepeatCount);
    CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -230,7 +231,7 @@ protected:
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
 
       CPPUNIT_ASSERT_EQUAL(1, m_alarmID);
-      CPPUNIT_ASSERT_EQUAL((uint16_t)1, m_alarm.repeat);
+      CPPUNIT_ASSERT_EQUAL(1, m_alarm.repeat);
       CPPUNIT_ASSERT_EQUAL((int)TUE, m_alarm.datetime.tm_wday);
       CPPUNIT_ASSERT_EQUAL(3, m_alarm.datetime.tm_hour);
       CPPUNIT_ASSERT_EQUAL(45, m_alarm.datetime.tm_min);
@@ -247,7 +248,7 @@ protected:
 
 
       CPPUNIT_ASSERT_EQUAL(1, m_alarmID);
-      CPPUNIT_ASSERT_EQUAL((uint16_t)1, m_alarm.repeat);
+      CPPUNIT_ASSERT_EQUAL(1, m_alarm.repeat);
       CPPUNIT_ASSERT_EQUAL(9, m_alarm.datetime.tm_mon); // Month from 0 to 11
       CPPUNIT_ASSERT_EQUAL(9, m_alarm.datetime.tm_mday);
       CPPUNIT_ASSERT_EQUAL(3, m_alarm.datetime.tm_hour);
@@ -265,7 +266,7 @@ protected:
 
 
       CPPUNIT_ASSERT_EQUAL(1, m_alarmID);
-      CPPUNIT_ASSERT_EQUAL((uint16_t)1, m_alarm.repeat);
+      CPPUNIT_ASSERT_EQUAL(1, m_alarm.repeat);
       CPPUNIT_ASSERT_EQUAL(9, m_alarm.datetime.tm_mon); // Month from 0 to 11
       CPPUNIT_ASSERT_EQUAL(9, m_alarm.datetime.tm_mday);
       CPPUNIT_ASSERT_EQUAL(0, m_alarm.datetime.tm_hour); // Hour and minute should default to 00:00
@@ -283,7 +284,7 @@ protected:
 
 
       CPPUNIT_ASSERT_EQUAL(1, m_alarmID);
-      CPPUNIT_ASSERT_EQUAL((uint16_t)1, m_alarm.repeat);
+      CPPUNIT_ASSERT_EQUAL(1, m_alarm.repeat);
       // Date should default to 1st January 00:00
       CPPUNIT_ASSERT_EQUAL(0, m_alarm.datetime.tm_mon); // Month from 0 to 11
       CPPUNIT_ASSERT_EQUAL(1, m_alarm.datetime.tm_mday);
@@ -345,22 +346,21 @@ protected:
    {
       char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
 
-      strncpy(&message[1], "02 01Y", MAX_MESSAGE_LENGTH);
+      strncpy(&message[1], "01 01Y", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT_EQUAL(2, m_alarmID);
+      CPPUNIT_ASSERT_EQUAL(1, m_alarm.repeat);
  
-      strncpy(&message[1], "03 01Y", MAX_MESSAGE_LENGTH);
+      strncpy(&message[1], "01 02Y", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT_EQUAL(3, m_alarmID);
+      CPPUNIT_ASSERT_EQUAL(2, m_alarm.repeat);
 
-      strncpy(&message[1], "16 01Y", MAX_MESSAGE_LENGTH);
+      strncpy(&message[1], "01 50Y", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT_EQUAL(16, m_alarmID);
+      CPPUNIT_ASSERT_EQUAL(50, m_alarm.repeat);
 
-      // Invalid action ID
-      strncpy(&message[1], "17 01Y", MAX_MESSAGE_LENGTH);
+      // Invalid repeat count
+      strncpy(&message[1], "01 51Y", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT_EQUAL(16, m_alarmID);
    }
 };
 

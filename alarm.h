@@ -4,7 +4,7 @@
 struct alarm_struct
 {
 	TM datetime;
-	uint16_t repeat;
+	int repeat;
 };
 typedef struct alarm_struct ALARM;
 
@@ -18,6 +18,6 @@ enum interval
 };
 typedef enum interval INTERVAL;
 
-bool alarm_make(ALARM * alarm, INTERVAL interval, TM * time, uint16_t repeat);
+bool alarm_make(ALARM * alarm, INTERVAL interval, TM * time, int repeat);
 
 #endif
