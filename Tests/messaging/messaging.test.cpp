@@ -19,12 +19,12 @@
 #include "syntax_parser.h"
 
 static bool set_rtc_callback(TM* tm);
-static bool set_alarm_callback(int actionID, ALARM * pAlarm);
-static void clr_alarm_callback(void);
-static void set_io_type_callback(void);
-static void read_input_callback(void);
-static void reset_callback(void);
-static void invalid_callback(void);
+static bool set_alarm_callback(int alarm_id, ALARM * pAlarm);
+static bool clr_alarm_callback(int alarm_id);
+static bool set_io_type_callback(void);
+static bool read_input_callback(void);
+static bool reset_callback(void);
+static bool invalid_callback(void);
 static bool reply_callback(char * message);
 
 static void set_test_object(void* obj);
@@ -42,6 +42,7 @@ class MessagingTest : public CppUnit::TestFixture  {
    CPPUNIT_TEST(SetAlarmMessageTestWithBadDatetime);
    CPPUNIT_TEST(SetAlarmMessageTestActionID);
    CPPUNIT_TEST(SetAlarmMessageTestRepeatCount);
+   CPPUNIT_TEST(ClrAlarmMessageTest);
    CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -53,38 +54,44 @@ public:
       return true;
    }
 
-   bool Set_alarm_callback(int actionID, ALARM * pAlarm)
+   bool Set_alarm_callback(int alarm_id, ALARM * pAlarm)
    {
       m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)] = true;
       time_cpy(&(m_alarm.datetime), &(pAlarm->datetime));
       m_alarm.repeat = pAlarm->repeat;
-      m_alarmID = actionID;
+      m_alarm_id = alarm_id;
       return true;
    }
 
-   void Clr_alarm_callback(void)
+   bool Clr_alarm_callback(int alarm_id)
    {
       m_callback_flags[MSG_ID_IDX(MSG_CLEAR_ALARM)] = true;
+      m_alarm_id = alarm_id;
+      return true;
    }
 
-   void Set_io_type_callback(void)
+   bool Set_io_type_callback(void)
    {
-      m_callback_flags[MSG_ID_IDX(MSG_SET_IO_TYPE)] = true;  
+      m_callback_flags[MSG_ID_IDX(MSG_SET_IO_TYPE)] = true;
+      return true;
    }
 
-   void Read_input_callback(void)
+   bool Read_input_callback(void)
    {
-      m_callback_flags[MSG_ID_IDX(MSG_READ_INPUT)] = true;  
+      m_callback_flags[MSG_ID_IDX(MSG_READ_INPUT)] = true;
+      return true;
    }
 
-   void Reset_callback(void)
+   bool Reset_callback(void)
    {
-      m_callback_flags[MSG_ID_IDX(MSG_RESET)] = true;  
+      m_callback_flags[MSG_ID_IDX(MSG_RESET)] = true;
+      return true;
    }
 
-   void Invalid_callback(void)
+   bool Invalid_callback(void)
    {
-      m_callback_flags[MSG_ID_IDX(MSG_INVALID)] = true;  
+      m_callback_flags[MSG_ID_IDX(MSG_INVALID)] = true;
+      return true;
    }
 
    bool Reply_callback(char * message)
@@ -101,6 +108,7 @@ public:
 
       m_callbacks.set_rtc_fn = set_rtc_callback;
       m_callbacks.set_alarm_fn = set_alarm_callback;
+      m_callbacks.clr_alarm_fn = clr_alarm_callback;
       m_callbacks.set_io_type_fn = set_io_type_callback;
       m_callbacks.read_input_fn = read_input_callback;
       m_callbacks.reset_fn = reset_callback;
@@ -122,7 +130,7 @@ private:
    TM m_time;
    std::string m_reply;
    ALARM m_alarm;
-   int m_alarmID;
+   int m_alarm_id;
 
    MessageHandler * m_message_handler;
 
@@ -230,7 +238,7 @@ protected:
       strncpy(&message[1], "01 01W TUE 03:45", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
 
-      CPPUNIT_ASSERT_EQUAL(1, m_alarmID);
+      CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
       CPPUNIT_ASSERT_EQUAL(1, m_alarm.repeat);
       CPPUNIT_ASSERT_EQUAL((int)TUE, m_alarm.datetime.tm_wday);
       CPPUNIT_ASSERT_EQUAL(3, m_alarm.datetime.tm_hour);
@@ -247,7 +255,7 @@ protected:
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
 
 
-      CPPUNIT_ASSERT_EQUAL(1, m_alarmID);
+      CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
       CPPUNIT_ASSERT_EQUAL(1, m_alarm.repeat);
       CPPUNIT_ASSERT_EQUAL(9, m_alarm.datetime.tm_mon); // Month from 0 to 11
       CPPUNIT_ASSERT_EQUAL(9, m_alarm.datetime.tm_mday);
@@ -265,7 +273,7 @@ protected:
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
 
 
-      CPPUNIT_ASSERT_EQUAL(1, m_alarmID);
+      CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
       CPPUNIT_ASSERT_EQUAL(1, m_alarm.repeat);
       CPPUNIT_ASSERT_EQUAL(9, m_alarm.datetime.tm_mon); // Month from 0 to 11
       CPPUNIT_ASSERT_EQUAL(9, m_alarm.datetime.tm_mday);
@@ -283,7 +291,7 @@ protected:
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
 
 
-      CPPUNIT_ASSERT_EQUAL(1, m_alarmID);
+      CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
       CPPUNIT_ASSERT_EQUAL(1, m_alarm.repeat);
       // Date should default to 1st January 00:00
       CPPUNIT_ASSERT_EQUAL(0, m_alarm.datetime.tm_mon); // Month from 0 to 11
@@ -326,20 +334,20 @@ protected:
 
       strncpy(&message[1], "02 01Y", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT_EQUAL(2, m_alarmID);
+      CPPUNIT_ASSERT_EQUAL(2, m_alarm_id);
  
       strncpy(&message[1], "03 01Y", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT_EQUAL(3, m_alarmID);
+      CPPUNIT_ASSERT_EQUAL(3, m_alarm_id);
 
       strncpy(&message[1], "16 01Y", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT_EQUAL(16, m_alarmID);
+      CPPUNIT_ASSERT_EQUAL(16, m_alarm_id);
 
       // Invalid action ID
       strncpy(&message[1], "17 01Y", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT_EQUAL(16, m_alarmID);
+      CPPUNIT_ASSERT_EQUAL(16, m_alarm_id);
    }
 
    void SetAlarmMessageTestRepeatCount()
@@ -362,6 +370,30 @@ protected:
       strncpy(&message[1], "01 51Y", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
    }
+
+   void ClrAlarmMessageTest()
+   {
+      char message[MAX_MESSAGE_LENGTH] = {MSG_CLEAR_ALARM};
+      strncpy(&message[1], "01", MAX_MESSAGE_LENGTH);
+
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
+
+      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
+      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_CLEAR_ALARM)]);
+
+      strncpy(&message[1], "02", MAX_MESSAGE_LENGTH);
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      CPPUNIT_ASSERT_EQUAL(2, m_alarm_id);
+
+      strncpy(&message[1], "16", MAX_MESSAGE_LENGTH);
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      CPPUNIT_ASSERT_EQUAL(16, m_alarm_id);
+
+      strncpy(&message[1], "17", MAX_MESSAGE_LENGTH); // Invalid action ID
+      CPPUNIT_ASSERT_EQUAL(16, m_alarm_id);
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
+   }
 };
 
 static MessagingTest * s_test_object;
@@ -373,34 +405,34 @@ static bool set_rtc_callback(TM*tm)
    return s_test_object->Set_rtc_callback(tm);
 }
 
-static bool set_alarm_callback(int actionID, ALARM * pAlarm)
+static bool set_alarm_callback(int alarm_id, ALARM * pAlarm)
 {
-   return s_test_object->Set_alarm_callback(actionID, pAlarm);
+   return s_test_object->Set_alarm_callback(alarm_id, pAlarm);
 }
 
-static void clr_alarm_callback(void)
+static bool clr_alarm_callback(int alarm_id)
 {
-   s_test_object->Clr_alarm_callback();
+   return s_test_object->Clr_alarm_callback(alarm_id);
 }
 
-static void set_io_type_callback(void)
+static bool set_io_type_callback(void)
 {
-   s_test_object->Set_io_type_callback();
+   return s_test_object->Set_io_type_callback();
 }
 
-static void read_input_callback(void)
+static bool read_input_callback(void)
 {
-   s_test_object->Read_input_callback();
+   return s_test_object->Read_input_callback();
 }
 
-static void reset_callback(void)
+static bool reset_callback(void)
 {
-   s_test_object->Reset_callback();
+   return s_test_object->Reset_callback();
 }
 
-static void invalid_callback(void)
+static bool invalid_callback(void)
 {
-   s_test_object->Invalid_callback();
+   return s_test_object->Invalid_callback();
 }
 
 static bool reply_callback(char * message)

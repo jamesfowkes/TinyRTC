@@ -349,7 +349,7 @@ bool MessageHandler::handle_message(char * message)
         result = set_alarm_from_message(&message[1]);
         break;
     case MSG_CLEAR_ALARM:
-        result = false;//clearAlarmFromMessage(&message[1]);
+        result = clear_alarm_from_message(&message[1]);
         break;
     case MSG_SET_IO_TYPE:
         result = false;//setIOTypeFromMessage(&message[1]);
@@ -451,6 +451,20 @@ bool MessageHandler::set_alarm_from_message(char * message)
     result = alarm_make(&new_alarm, (INTERVAL)message_as_set_alarm_string->interval, &alarm_time, repeat);
 
     result &= m_callbacks->set_alarm_fn(action_id, &new_alarm);
+
+    return result;
+}
+
+bool MessageHandler::clear_alarm_from_message(char * message)
+{
+    bool result = false;
+    int action_id;
+
+    if (!m_callbacks->clr_alarm_fn) { return false; }
+
+    if (!parse_two_chars_to_int(&action_id, message, get_action_id_range())) { return false; }
+
+    result = m_callbacks->clr_alarm_fn(action_id);
 
     return result;
 }

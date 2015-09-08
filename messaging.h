@@ -30,11 +30,11 @@ typedef enum message_id MESSAGE_ID;
 
 typedef bool (*MSG_SET_RTC_FN)(TM* tm);
 typedef bool (*MSG_SET_ALARM_FN)(int action_id, ALARM * pAlarm);
-typedef void (*MSG_CLR_ALARM_FN)(void);
-typedef void (*MSG_SET_IO_TYPE_FN)(void);
-typedef void (*MSG_READ_INPUT_FN)(void);
-typedef void (*MSG_RESET_FN)(void);
-typedef void (*MSG_INVALID_FN)(void);
+typedef bool (*MSG_CLR_ALARM_FN)(int action_id);
+typedef bool (*MSG_SET_IO_TYPE_FN)(void);
+typedef bool (*MSG_READ_INPUT_FN)(void);
+typedef bool (*MSG_RESET_FN)(void);
+typedef bool (*MSG_INVALID_FN)(void);
 typedef bool (*MSG_REPLY_FN)(char * buffer);
 
 struct msg_handler_functions
@@ -60,6 +60,7 @@ class MessageHandler
 		bool set_rtc_from_message(char * message);
 		bool get_rtc();
 		bool set_alarm_from_message(char * message);
+		bool clear_alarm_from_message(char * message);
 
 		MSG_HANDLER_FUNCTIONS * m_callbacks;
 };
