@@ -203,6 +203,13 @@ MessageHandler::MessageHandler(MSG_HANDLER_FUNCTIONS * callbacks)
     m_callbacks  = callbacks;
 }
 
+void MessageHandler::new_reply(MESSAGE_ID id)
+{
+    memset(s_reply, '\0', MAX_MESSAGE_LENGTH);
+    s_reply[0] = MSG_REPLY;
+    s_reply[1] = (char)id;
+}
+
 bool MessageHandler::handle_message(char * message)
 {
     MESSAGE_ID id = (MESSAGE_ID)message[0];
@@ -229,7 +236,8 @@ bool MessageHandler::handle_message(char * message)
         result = set_io_type_from_message(&message[1]);
         break;
     case MSG_READ_INPUT:
-        result = false;//printInputStateFromMessage(&message[1]));
+        result = read_input_from_message(&message[1]);
+        break;
     case MSG_RESET:
         result = false;//resetAllActions(&message[1]);
         break;
@@ -282,12 +290,7 @@ bool MessageHandler::get_rtc()
 
     tm.tm_mon++; // Convert 0-11 to 1-12 for conversion to string date
     
-    memset(s_reply, '\0', MAX_MESSAGE_LENGTH);
-
-    // Set message header
-    s_reply[0] = MSG_REPLY;
-    s_reply[1] = MSG_GET_RTC;
-
+    new_reply(MSG_GET_RTC);
     time_to_datetime_string(&tm, (DT_FORMAT_STRING*)&s_reply[2]);
 
     result = m_callbacks->reply_fn(s_reply);
@@ -360,4 +363,38 @@ bool MessageHandler::set_io_type_from_message(char * message)
     result = m_callbacks->set_io_type_fn(io_index, io_type);
 
     return result;  
+}
+
+bool MessageHandler::read_input_from_message(char * message)
+{
+    bool result = false;
+    int io_index = -1;
+
+    if (!m_callbacks->reply_fn) { return false; }
+
+    if (!parse_chars_to_int(&io_index, &message[0], 1, get_input_index_range())) { return false; }
+
+    new_reply(MSG_READ_INPUT);
+
+    IO_STATE state = app_get_io_state(io_index);
+    
+    switch(state)
+    {
+    case OFF:
+        s_reply[2] = '0';
+        break;
+    case ON:
+        s_reply[2] = '1';
+        break;
+    case UNKNOWN:
+    default:
+        s_reply[2] = '?';
+        break;
+    }
+
+    s_reply[3] = '\0';
+
+    result = m_callbacks->reply_fn(s_reply);    
+
+    return result;
 }

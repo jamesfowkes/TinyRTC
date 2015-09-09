@@ -2,6 +2,7 @@ Import('cppflags', 'cpppath', 'cppdefines', 'library_path')
 objects = [
 	Object('messaging.test.cpp', CPPFLAGS=cppflags, CPPPATH=cpppath, CPPDEFINES=cppdefines),
 	Object('app.rtc.cpp', CPPFLAGS=cppflags, CPPPATH=cpppath, CPPDEFINES=cppdefines),
+	Object('app.io.cpp', CPPFLAGS=cppflags, CPPPATH=cpppath, CPPDEFINES=cppdefines),
 	Object('../../messaging.cpp', CPPFLAGS=cppflags, CPPPATH=cpppath, CPPDEFINES=cppdefines),
 	Object('../../io.cpp', CPPFLAGS=cppflags, CPPPATH=cpppath, CPPDEFINES=cppdefines),
 	Object('../../alarm.cpp', CPPFLAGS=cppflags, CPPPATH=cpppath, CPPDEFINES=cppdefines),

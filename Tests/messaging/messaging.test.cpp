@@ -19,11 +19,12 @@
 #include "ast_node.h"
 #include "syntax_parser.h"
 
+#include "app.io.h"
+
 static bool set_rtc_callback(TM* tm);
 static bool set_alarm_callback(int alarm_id, ALARM * pAlarm);
 static bool clr_alarm_callback(int alarm_id);
 static bool set_io_type_callback(int io_index, IO_TYPE io_type);
-static bool read_input_callback(void);
 static bool reset_callback(void);
 static bool invalid_callback(void);
 static bool reply_callback(char * message);
@@ -45,6 +46,7 @@ class MessagingTest : public CppUnit::TestFixture  {
    CPPUNIT_TEST(SetAlarmMessageTestRepeatCount);
    CPPUNIT_TEST(ClrAlarmMessageTest);
    CPPUNIT_TEST(SetIOTypeMessageTest);
+   CPPUNIT_TEST(ReadInputMessageTest);
    CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -80,12 +82,6 @@ public:
       return true;
    }
 
-   bool Read_input_callback(void)
-   {
-      m_callback_flags[MSG_ID_IDX(MSG_READ_INPUT)] = true;
-      return true;
-   }
-
    bool Reset_callback(void)
    {
       m_callback_flags[MSG_ID_IDX(MSG_RESET)] = true;
@@ -114,7 +110,6 @@ public:
       m_callbacks.set_alarm_fn = set_alarm_callback;
       m_callbacks.clr_alarm_fn = clr_alarm_callback;
       m_callbacks.set_io_type_fn = set_io_type_callback;
-      m_callbacks.read_input_fn = read_input_callback;
       m_callbacks.reset_fn = reset_callback;
       m_callbacks.invalid_fn = invalid_callback;
       m_callbacks.reply_fn = reply_callback;
@@ -133,7 +128,7 @@ public:
       m_alarm_id = -1;
 
       m_io_index = -1;
-      m_io_type = -1;
+      m_io_type = (IO_TYPE)-1;
 
       set_test_object(this);
    }
@@ -153,7 +148,7 @@ private:
    ALARM m_alarm;
    int m_alarm_id;
 
-   int m_io_type;
+   IO_TYPE m_io_type;
    int m_io_index;
 
    MessageHandler * m_message_handler;
@@ -359,7 +354,7 @@ protected:
       strncpy(&message[1], "02 01Y", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
       CPPUNIT_ASSERT_EQUAL(2, m_alarm_id);
- 
+
       strncpy(&message[1], "03 01Y", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
       CPPUNIT_ASSERT_EQUAL(3, m_alarm_id);
@@ -368,10 +363,15 @@ protected:
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
       CPPUNIT_ASSERT_EQUAL(16, m_alarm_id);
 
+      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
+      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
+
       // Invalid action ID
+      m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)] = false;
       strncpy(&message[1], "17 01Y", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
       CPPUNIT_ASSERT_EQUAL(16, m_alarm_id);
+      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
    }
 
    void SetAlarmMessageTestRepeatCount()
@@ -390,9 +390,14 @@ protected:
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
       CPPUNIT_ASSERT_EQUAL(50, m_alarm.repeat);
 
+      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
+      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
+
       // Invalid repeat count
+      m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)] = false;
       strncpy(&message[1], "01 51Y", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
+      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
    }
 
    void ClrAlarmMessageTest()
@@ -414,9 +419,14 @@ protected:
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
       CPPUNIT_ASSERT_EQUAL(16, m_alarm_id);
 
+      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
+      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_CLEAR_ALARM)]);
+
+      m_callback_flags[MSG_ID_IDX(MSG_CLEAR_ALARM)] = false;
       strncpy(&message[1], "17", MAX_MESSAGE_LENGTH); // Invalid action ID
       CPPUNIT_ASSERT_EQUAL(16, m_alarm_id);
       CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
+      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_CLEAR_ALARM)]);
    }
 
    void SetIOTypeMessageTest()
@@ -425,6 +435,64 @@ protected:
       strncpy(&message[1], "1 OUT", MAX_MESSAGE_LENGTH);
 
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      CPPUNIT_ASSERT_EQUAL(OUTPUT, m_io_type);
+      CPPUNIT_ASSERT_EQUAL(1, m_io_index);
+
+      strncpy(&message[1], "2 IN", MAX_MESSAGE_LENGTH);
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      CPPUNIT_ASSERT_EQUAL(INPUT, m_io_type);
+      CPPUNIT_ASSERT_EQUAL(2, m_io_index);
+
+      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
+      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_IO_TYPE)]);
+
+      m_callback_flags[MSG_ID_IDX(MSG_SET_IO_TYPE)] = false;
+
+      strncpy(&message[1], "4 IN", MAX_MESSAGE_LENGTH); // Invalid IO index
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
+
+      strncpy(&message[1], "1 XX", MAX_MESSAGE_LENGTH); // Invalid io type
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
+
+      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_IO_TYPE)]);
+   }
+
+   void ReadInputMessageTest()
+   {
+      char message[MAX_MESSAGE_LENGTH] = {MSG_READ_INPUT};
+      
+      strncpy(&message[1], "0", MAX_MESSAGE_LENGTH);
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+
+      CPPUNIT_ASSERT_EQUAL((char)MSG_REPLY, m_reply[0]);
+      CPPUNIT_ASSERT_EQUAL((char)MSG_READ_INPUT, m_reply[1]);
+      CPPUNIT_ASSERT_EQUAL('1', m_reply[2]);
+      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_REPLY)]);
+
+      strncpy(&message[1], "1", MAX_MESSAGE_LENGTH);
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      CPPUNIT_ASSERT_EQUAL((char)MSG_REPLY, m_reply[0]);
+      CPPUNIT_ASSERT_EQUAL((char)MSG_READ_INPUT, m_reply[1]);
+      CPPUNIT_ASSERT_EQUAL('0', m_reply[2]);
+
+      strncpy(&message[1], "2", MAX_MESSAGE_LENGTH);
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      CPPUNIT_ASSERT_EQUAL((char)MSG_REPLY, m_reply[0]);
+      CPPUNIT_ASSERT_EQUAL((char)MSG_READ_INPUT, m_reply[1]);
+      CPPUNIT_ASSERT_EQUAL('0', m_reply[2]);
+
+      strncpy(&message[1], "3", MAX_MESSAGE_LENGTH);
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      CPPUNIT_ASSERT_EQUAL((char)MSG_REPLY, m_reply[0]);
+      CPPUNIT_ASSERT_EQUAL((char)MSG_READ_INPUT, m_reply[1]);
+      CPPUNIT_ASSERT_EQUAL('1', m_reply[2]);
+
+      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
+
+      m_callback_flags[MSG_ID_IDX(MSG_REPLY)] = false;
+      strncpy(&message[1], "4", MAX_MESSAGE_LENGTH);
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
+      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_REPLY)]);
    }
 };
 
@@ -450,11 +518,6 @@ static bool clr_alarm_callback(int alarm_id)
 static bool set_io_type_callback(int io_index, IO_TYPE io_type)
 {
    return s_test_object->Set_io_type_callback(io_index, io_type);
-}
-
-static bool read_input_callback(void)
-{
-   return s_test_object->Read_input_callback();
 }
 
 static bool reset_callback(void)
