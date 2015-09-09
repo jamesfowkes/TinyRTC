@@ -29,9 +29,9 @@ typedef enum message_id MESSAGE_ID;
 #define MSG_MAX_ID MSG_ID_IDX(_MSG_MAX_ID)
 
 typedef bool (*MSG_SET_RTC_FN)(TM* tm);
-typedef bool (*MSG_SET_ALARM_FN)(int action_id, ALARM * pAlarm);
-typedef bool (*MSG_CLR_ALARM_FN)(int action_id);
-typedef bool (*MSG_SET_IO_TYPE_FN)(void);
+typedef bool (*MSG_SET_ALARM_FN)(int alarm_id, ALARM * pAlarm);
+typedef bool (*MSG_CLR_ALARM_FN)(int alarm_id);
+typedef bool (*MSG_SET_IO_TYPE_FN)(int io_index, IO_TYPE io_type);
 typedef bool (*MSG_READ_INPUT_FN)(void);
 typedef bool (*MSG_RESET_FN)(void);
 typedef bool (*MSG_INVALID_FN)(void);
@@ -61,7 +61,7 @@ class MessageHandler
 		bool get_rtc();
 		bool set_alarm_from_message(char * message);
 		bool clear_alarm_from_message(char * message);
-
+		bool set_io_type_from_message(char * message);
 		MSG_HANDLER_FUNCTIONS * m_callbacks;
 };
 

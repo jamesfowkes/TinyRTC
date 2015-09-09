@@ -14,6 +14,7 @@
 #include "Utility/util_time.h"
 
 #include "alarm.h"
+#include "io.h"
 #include "messaging.h"
 #include "ast_node.h"
 #include "syntax_parser.h"
@@ -21,7 +22,7 @@
 static bool set_rtc_callback(TM* tm);
 static bool set_alarm_callback(int alarm_id, ALARM * pAlarm);
 static bool clr_alarm_callback(int alarm_id);
-static bool set_io_type_callback(void);
+static bool set_io_type_callback(int io_index, IO_TYPE io_type);
 static bool read_input_callback(void);
 static bool reset_callback(void);
 static bool invalid_callback(void);
@@ -43,6 +44,7 @@ class MessagingTest : public CppUnit::TestFixture  {
    CPPUNIT_TEST(SetAlarmMessageTestActionID);
    CPPUNIT_TEST(SetAlarmMessageTestRepeatCount);
    CPPUNIT_TEST(ClrAlarmMessageTest);
+   CPPUNIT_TEST(SetIOTypeMessageTest);
    CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -70,9 +72,11 @@ public:
       return true;
    }
 
-   bool Set_io_type_callback(void)
+   bool Set_io_type_callback(int io_index, IO_TYPE io_type)
    {
       m_callback_flags[MSG_ID_IDX(MSG_SET_IO_TYPE)] = true;
+      m_io_index = io_index;
+      m_io_type = io_type;
       return true;
    }
 
@@ -115,6 +119,22 @@ public:
       m_callbacks.invalid_fn = invalid_callback;
       m_callbacks.reply_fn = reply_callback;
 
+      m_alarm.datetime.tm_year = -1;
+      m_alarm.datetime.tm_mon = -1;
+      m_alarm.datetime.tm_mday = -1;
+      m_alarm.datetime.tm_wday = -1;
+      m_alarm.datetime.tm_hour = -1;
+      m_alarm.datetime.tm_min = -1;
+      m_alarm.datetime.tm_sec = -1;
+      m_alarm.datetime.tm_yday = -1;
+      m_alarm.datetime.tm_isdst = -1;
+
+      m_alarm.repeat = -1;
+      m_alarm_id = -1;
+
+      m_io_index = -1;
+      m_io_type = -1;
+
       set_test_object(this);
    }
 
@@ -129,8 +149,12 @@ private:
 
    TM m_time;
    std::string m_reply;
+   
    ALARM m_alarm;
    int m_alarm_id;
+
+   int m_io_type;
+   int m_io_index;
 
    MessageHandler * m_message_handler;
 
@@ -394,6 +418,14 @@ protected:
       CPPUNIT_ASSERT_EQUAL(16, m_alarm_id);
       CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
    }
+
+   void SetIOTypeMessageTest()
+   {
+      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_IO_TYPE};
+      strncpy(&message[1], "1 OUT", MAX_MESSAGE_LENGTH);
+
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+   }
 };
 
 static MessagingTest * s_test_object;
@@ -415,9 +447,9 @@ static bool clr_alarm_callback(int alarm_id)
    return s_test_object->Clr_alarm_callback(alarm_id);
 }
 
-static bool set_io_type_callback(void)
+static bool set_io_type_callback(int io_index, IO_TYPE io_type)
 {
-   return s_test_object->Set_io_type_callback();
+   return s_test_object->Set_io_type_callback(io_index, io_type);
 }
 
 static bool read_input_callback(void)

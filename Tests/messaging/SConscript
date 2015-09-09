@@ -1,11 +1,14 @@
-Import('cpppath', 'cppdefines', 'library_path')
+Import('cppflags', 'cpppath', 'cppdefines', 'library_path')
 objects = [
-	Object('messaging.test.cpp', CPPPATH=cpppath, CPPDEFINES=cppdefines),
-	Object('app.rtc.cpp', CPPPATH=cpppath, CPPDEFINES=cppdefines),
-	Object('../../messaging.cpp', CPPPATH=cpppath, CPPDEFINES=cppdefines),
-	Object('../../alarm.cpp', CPPPATH=cpppath, CPPDEFINES=cppdefines),
-	Object('../../syntax_parser.c', CPPPATH=cpppath, CPPDEFINES=cppdefines, CC='g++'),
-	Object('../../ast_node.c', CPPPATH=cpppath, CPPDEFINES=cppdefines, CC='g++'),
-	Object(library_path+'/Utility/util_time.c', CPPPATH=cpppath, CPPDEFINES=cppdefines, CC='g++')
+	Object('messaging.test.cpp', CPPFLAGS=cppflags, CPPPATH=cpppath, CPPDEFINES=cppdefines),
+	Object('app.rtc.cpp', CPPFLAGS=cppflags, CPPPATH=cpppath, CPPDEFINES=cppdefines),
+	Object('../../messaging.cpp', CPPFLAGS=cppflags, CPPPATH=cpppath, CPPDEFINES=cppdefines),
+	Object('../../io.cpp', CPPFLAGS=cppflags, CPPPATH=cpppath, CPPDEFINES=cppdefines),
+	Object('../../alarm.cpp', CPPFLAGS=cppflags, CPPPATH=cpppath, CPPDEFINES=cppdefines),
+	Object('../../syntax_parser.c', CPPFLAGS=cppflags, CPPPATH=cpppath, CPPDEFINES=cppdefines, CC='g++'),
+	Object('../../ast_node.c', CPPFLAGS=cppflags, CPPPATH=cpppath, CPPDEFINES=cppdefines, CC='g++'),
+	Object(library_path+'/Utility/util_time.c', CPPFLAGS=cppflags, CPPPATH=cpppath, CPPDEFINES=cppdefines, CC='g++'),
+	Object(library_path+'/Utility/util_simple_compare.c', CPPFLAGS=cppflags, CPPPATH=cpppath, CPPDEFINES=cppdefines, CC='g++'),
+	Object(library_path+'/Utility/util_simple_parse.c', CPPFLAGS=cppflags, CPPPATH=cpppath, CPPDEFINES=cppdefines, CC='g++')
 ]
 Return('objects')
