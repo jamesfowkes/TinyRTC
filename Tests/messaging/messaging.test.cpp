@@ -24,9 +24,10 @@
 static bool set_rtc_callback(TM* tm);
 static bool set_alarm_callback(int alarm_id, ALARM * pAlarm);
 static bool clr_alarm_callback(int alarm_id);
+static bool set_trigger_callback(int io_index, char * pTriggerExpression);
+static bool clear_trigger_callback(int io_index);
 static bool set_io_type_callback(int io_index, IO_TYPE io_type);
 static bool reset_callback(void);
-static bool invalid_callback(void);
 static bool reply_callback(char * message);
 
 static void set_test_object(void* obj);
@@ -45,8 +46,11 @@ class MessagingTest : public CppUnit::TestFixture  {
    CPPUNIT_TEST(SetAlarmMessageTestActionID);
    CPPUNIT_TEST(SetAlarmMessageTestRepeatCount);
    CPPUNIT_TEST(ClrAlarmMessageTest);
+   CPPUNIT_TEST(SetTriggerMessageTest);
+   CPPUNIT_TEST(ClearTriggerMessageTest);
    CPPUNIT_TEST(SetIOTypeMessageTest);
    CPPUNIT_TEST(ReadInputMessageTest);
+   CPPUNIT_TEST(ResetMessageTest);
    CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -74,6 +78,21 @@ public:
       return true;
    }
 
+   bool Set_trigger_callback(int io_index, char * pTriggerExpression)
+   {
+      m_reply = std::string(pTriggerExpression);
+      m_io_trigger = io_index;
+      m_callback_flags[MSG_ID_IDX(MSG_SET_TRIGGER)] = true;
+      return true;
+   }
+
+   bool Clear_trigger_callback(int io_index)
+   {
+      m_io_trigger = io_index;
+      m_callback_flags[MSG_ID_IDX(MSG_CLEAR_TRIGGER)] = true;
+      return true;
+   }
+
    bool Set_io_type_callback(int io_index, IO_TYPE io_type)
    {
       m_callback_flags[MSG_ID_IDX(MSG_SET_IO_TYPE)] = true;
@@ -85,12 +104,6 @@ public:
    bool Reset_callback(void)
    {
       m_callback_flags[MSG_ID_IDX(MSG_RESET)] = true;
-      return true;
-   }
-
-   bool Invalid_callback(void)
-   {
-      m_callback_flags[MSG_ID_IDX(MSG_INVALID)] = true;
       return true;
    }
 
@@ -109,9 +122,10 @@ public:
       m_callbacks.set_rtc_fn = set_rtc_callback;
       m_callbacks.set_alarm_fn = set_alarm_callback;
       m_callbacks.clr_alarm_fn = clr_alarm_callback;
+      m_callbacks.set_trigger_fn = set_trigger_callback;
+      m_callbacks.clear_trigger_fn = clear_trigger_callback;
       m_callbacks.set_io_type_fn = set_io_type_callback;
       m_callbacks.reset_fn = reset_callback;
-      m_callbacks.invalid_fn = invalid_callback;
       m_callbacks.reply_fn = reply_callback;
 
       m_alarm.datetime.tm_year = -1;
@@ -129,6 +143,8 @@ public:
 
       m_io_index = -1;
       m_io_type = (IO_TYPE)-1;
+
+      m_io_trigger = -1;
 
       set_test_object(this);
    }
@@ -150,6 +166,8 @@ private:
 
    IO_TYPE m_io_type;
    int m_io_index;
+
+   int m_io_trigger;
 
    MessageHandler * m_message_handler;
 
@@ -429,6 +447,30 @@ protected:
       CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_CLEAR_ALARM)]);
    }
 
+   void SetTriggerMessageTest()
+   {
+      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_TRIGGER};
+      strncpy(&message[1], "0 1&2|A1", MAX_MESSAGE_LENGTH);
+      
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+
+      std::string expected = std::string("1&2|A1");
+      CPPUNIT_ASSERT_EQUAL(expected, m_reply);
+
+      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
+      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_TRIGGER)]);
+   }
+
+   void ClearTriggerMessageTest()
+   {
+      char message[MAX_MESSAGE_LENGTH] = {MSG_CLEAR_TRIGGER};
+      strncpy(&message[1], "0", MAX_MESSAGE_LENGTH);
+      
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
+      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_CLEAR_TRIGGER)]);
+   }
+
    void SetIOTypeMessageTest()
    {
       char message[MAX_MESSAGE_LENGTH] = {MSG_SET_IO_TYPE};
@@ -494,7 +536,17 @@ protected:
       CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
       CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_REPLY)]);
    }
+
+   void ResetMessageTest()
+   {
+      char message[MAX_MESSAGE_LENGTH] = {MSG_RESET};
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+
+      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_RESET)]);
+      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
+   }
 };
+
 
 static MessagingTest * s_test_object;
 
@@ -515,6 +567,16 @@ static bool clr_alarm_callback(int alarm_id)
    return s_test_object->Clr_alarm_callback(alarm_id);
 }
 
+static bool set_trigger_callback(int io_index, char * pTriggerExpression)
+{
+   return s_test_object->Set_trigger_callback(io_index, pTriggerExpression);
+}
+
+static bool clear_trigger_callback(int io_index)
+{
+   return s_test_object->Clear_trigger_callback(io_index);
+}
+
 static bool set_io_type_callback(int io_index, IO_TYPE io_type)
 {
    return s_test_object->Set_io_type_callback(io_index, io_type);
@@ -523,11 +585,6 @@ static bool set_io_type_callback(int io_index, IO_TYPE io_type)
 static bool reset_callback(void)
 {
    return s_test_object->Reset_callback();
-}
-
-static bool invalid_callback(void)
-{
-   return s_test_object->Invalid_callback();
 }
 
 static bool reply_callback(char * message)

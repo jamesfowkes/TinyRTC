@@ -16,10 +16,11 @@ enum message_id
     MSG_GET_RTC,
     MSG_SET_ALARM,
     MSG_CLEAR_ALARM,
+    MSG_SET_TRIGGER,
+    MSG_CLEAR_TRIGGER,
     MSG_SET_IO_TYPE,
     MSG_READ_INPUT,
     MSG_RESET,
-    MSG_INVALID,
     MSG_REPLY,
     _MSG_MAX_ID
 };
@@ -30,21 +31,23 @@ typedef enum message_id MESSAGE_ID;
 
 typedef bool (*MSG_SET_RTC_FN)(TM* tm);
 typedef bool (*MSG_SET_ALARM_FN)(int alarm_id, ALARM * pAlarm);
-typedef bool (*MSG_CLR_ALARM_FN)(int alarm_id);
+typedef bool (*MSG_CLEAR_ALARM_FN)(int alarm_id);
+typedef bool (*MSG_SET_TRIGGER_FN)(int io_index, char * pTriggerExpression);
+typedef bool (*MSG_CLEAR_TRIGGER_FN)(int io_index);
 typedef bool (*MSG_SET_IO_TYPE_FN)(int io_index, IO_TYPE io_type);
 typedef bool (*MSG_READ_INPUT_FN)(IO_STATE io_state);
 typedef bool (*MSG_RESET_FN)(void);
-typedef bool (*MSG_INVALID_FN)(void);
 typedef bool (*MSG_REPLY_FN)(char * buffer);
 
 struct msg_handler_functions
 {
 	MSG_SET_RTC_FN set_rtc_fn;
 	MSG_SET_ALARM_FN set_alarm_fn;
-	MSG_CLR_ALARM_FN clr_alarm_fn;
+	MSG_CLEAR_ALARM_FN clr_alarm_fn;
+	MSG_SET_TRIGGER_FN set_trigger_fn;
+	MSG_CLEAR_TRIGGER_FN clear_trigger_fn;
 	MSG_SET_IO_TYPE_FN set_io_type_fn;
 	MSG_RESET_FN reset_fn;
-	MSG_INVALID_FN invalid_fn;
 	MSG_REPLY_FN reply_fn;
 };
 typedef struct msg_handler_functions MSG_HANDLER_FUNCTIONS;
@@ -63,8 +66,11 @@ class MessageHandler
 		bool get_rtc();
 		bool set_alarm_from_message(char * message);
 		bool clear_alarm_from_message(char * message);
+		bool set_trigger_from_message(char * message);
+		bool clear_trigger_from_message(char * message);
 		bool set_io_type_from_message(char * message);
 		bool read_input_from_message(char * message);
+		bool reset_from_message();
 
 		MSG_HANDLER_FUNCTIONS * m_callbacks;
 };

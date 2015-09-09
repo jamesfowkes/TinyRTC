@@ -212,6 +212,8 @@ void MessageHandler::new_reply(MESSAGE_ID id)
 
 bool MessageHandler::handle_message(char * message)
 {
+    if (!message) { return false; }
+
     MESSAGE_ID id = (MESSAGE_ID)message[0];
     
     bool result = false;
@@ -232,6 +234,12 @@ bool MessageHandler::handle_message(char * message)
     case MSG_CLEAR_ALARM:
         result = clear_alarm_from_message(&message[1]);
         break;
+    case MSG_SET_TRIGGER:
+        result = set_trigger_from_message(&message[1]);
+        break;
+    case MSG_CLEAR_TRIGGER:
+        result = clear_trigger_from_message(&message[1]);
+        break;
     case MSG_SET_IO_TYPE:
         result = set_io_type_from_message(&message[1]);
         break;
@@ -239,7 +247,7 @@ bool MessageHandler::handle_message(char * message)
         result = read_input_from_message(&message[1]);
         break;
     case MSG_RESET:
-        result = false;//resetAllActions(&message[1]);
+        result = reset_from_message();
         break;
     default:
         break;
@@ -346,6 +354,35 @@ bool MessageHandler::clear_alarm_from_message(char * message)
     return result;
 }
 
+bool MessageHandler::set_trigger_from_message(char * message)
+{
+    bool result = false;
+    int io_index;
+
+    if (!m_callbacks->set_trigger_fn) { return false; }
+
+    if (message[1] != ' ') { return false; }
+    if (!parse_chars_to_int(&io_index, &message[0], 1, get_input_index_range())) { return false; }
+    
+    result = m_callbacks->set_trigger_fn(io_index, &message[2]);
+
+    return result;
+}
+
+bool MessageHandler::clear_trigger_from_message(char * message)
+{
+    bool result = false;
+    int io_index;
+
+    if (!m_callbacks->clear_trigger_fn) { return false; }
+
+    if (!parse_chars_to_int(&io_index, &message[0], 1, get_input_index_range())) { return false; }
+
+    result = m_callbacks->clear_trigger_fn(io_index);
+
+    return result;
+}
+
 bool MessageHandler::set_io_type_from_message(char * message)
 {
     bool result = false;
@@ -377,7 +414,7 @@ bool MessageHandler::read_input_from_message(char * message)
     new_reply(MSG_READ_INPUT);
 
     IO_STATE state = app_get_io_state(io_index);
-    
+
     switch(state)
     {
     case OFF:
@@ -397,4 +434,15 @@ bool MessageHandler::read_input_from_message(char * message)
     result = m_callbacks->reply_fn(s_reply);    
 
     return result;
+}
+
+bool MessageHandler::reset_from_message()
+{
+    bool result = false;
+
+    if (!m_callbacks->reset_fn) { return false; }
+
+    result = m_callbacks->reset_fn();
+
+    return result;    
 }
