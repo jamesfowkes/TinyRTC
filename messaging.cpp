@@ -120,13 +120,14 @@ static bool parse_datetime_for_interval(char interval, char const * datetime_str
     bool success = true;
     int length = strlen(datetime_str);
 
-    // Default time to 00-01-01 00:00:00
-    datetime->tm_year = 0;
+    // Default time to 00-01-01 00:00:00 (where 00 is 2000)
+    datetime->tm_year = 100;
     datetime->tm_mon = 0; // Month from 0 to 11
     datetime->tm_mday = 1;
     datetime->tm_hour = 0;
     datetime->tm_min = 0;
     datetime->tm_sec = 0;
+    datetime->tm_wday = SAT;
 
     /* Parse by cascading from year to hour */
     if (interval == INTERVAL_YEAR)

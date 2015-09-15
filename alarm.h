@@ -35,6 +35,7 @@ struct alarm_string
 	char space3;
 	char d;
 	char duration[5];
+	char null;
 };
 typedef struct alarm_string ALARM_STRING;
 
@@ -50,10 +51,9 @@ public:
 	bool valid() { return m_valid; }
 	void print(char * buffer);
 
-	int get_duration() { return m_duration; }
+	#ifdef TEST
 	int get_repeat() { return m_repeat; }
-	INTERVAL get_repeat_interval() { return m_repeat_interval; }
-	TM * get_datetime() { return &m_datetime; }
+	#endif
 
 	bool to_string(ALARM_STRING * str) const;
 
@@ -86,5 +86,7 @@ namespace CppUnit
 	};
 };
 #endif
+
+void set_default_alarm_time(TM* tm);
 
 #endif

@@ -41,6 +41,7 @@ class MessagingTest : public CppUnit::TestFixture  {
    CPPUNIT_TEST(GetRTCMessageTest);
    CPPUNIT_TEST(SetAlarmMessageTestWithNoMessage);
    CPPUNIT_TEST(SetAlarmMessageTestWithWeeklyInterval);
+   CPPUNIT_TEST(SetAlarmMessageTestWithWeeklyIntervalOnWedDoesNotFailOnDuration);
    CPPUNIT_TEST(SetAlarmMessageTestWithFullDatetime);
    CPPUNIT_TEST(SetAlarmMessageTestWithDuration);
    CPPUNIT_TEST(SetAlarmMessageTestWithPartialDatetime);
@@ -276,24 +277,36 @@ protected:
       strncpy(&message[1], "01 01W TUE 03:45", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
 
-      TM expected_time = {0, 45, 3, 1, JAN, 0, TUE, 0, false, 0, 0};
+      TM expected_time; set_default_alarm_time(&expected_time);
+      expected_time.tm_hour = 3;
+      expected_time.tm_min = 45;
+      expected_time.tm_wday = TUE;
+
       Alarm expected_alarm = Alarm((INTERVAL)'W', &expected_time, 1, 60);
       CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
       CPPUNIT_ASSERT_EQUAL(expected_alarm, m_alarm);
 
       CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
       CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
+   }
 
+   void SetAlarmMessageTestWithWeeklyIntervalOnWedDoesNotFailOnDuration()
+   {
       // Check that duration still defaults to 60 minutes when string ends with 'D'
+      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
       strncpy(&message[1], "01 01W WED", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
 
+      TM expected_time; set_default_alarm_time(&expected_time);
+      expected_time.tm_wday = WED;
+
+      Alarm expected_alarm = Alarm((INTERVAL)'W', &expected_time, 1, 60);
+
       CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
-      CPPUNIT_ASSERT_EQUAL(1, m_alarm.get_repeat());
-      CPPUNIT_ASSERT_EQUAL((int)WED, m_alarm.get_datetime()->tm_wday);
-      CPPUNIT_ASSERT_EQUAL(0, m_alarm.get_datetime()->tm_hour);
-      CPPUNIT_ASSERT_EQUAL(0, m_alarm.get_datetime()->tm_min);
-      CPPUNIT_ASSERT_EQUAL(60, m_alarm.get_duration()); // Duration defaults to 60 minutes
+      CPPUNIT_ASSERT_EQUAL(expected_alarm, m_alarm);
+
+      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
+      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
    }
 
    void SetAlarmMessageTestWithFullDatetime()
@@ -302,16 +315,16 @@ protected:
       strncpy(&message[1], "01 01Y 10-09 03:45", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
 
+      TM expected_time; set_default_alarm_time(&expected_time);
+      expected_time.tm_mon = OCT;
+      expected_time.tm_mday = 9;
+      expected_time.tm_hour = 3;
+      expected_time.tm_min = 45;
 
+      Alarm expected_alarm = Alarm((INTERVAL)'Y', &expected_time, 1, 60);
+      
       CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
-      CPPUNIT_ASSERT_EQUAL(1, m_alarm.get_repeat());
-      CPPUNIT_ASSERT_EQUAL(INTERVAL_YEAR, m_alarm.get_repeat_interval());
-      CPPUNIT_ASSERT_EQUAL(60, m_alarm.get_duration()); // Duration defaults to 60 minutes
-
-      CPPUNIT_ASSERT_EQUAL(9, m_alarm.get_datetime()->tm_mon); // Month from 0 to 11
-      CPPUNIT_ASSERT_EQUAL(9, m_alarm.get_datetime()->tm_mday);
-      CPPUNIT_ASSERT_EQUAL(3, m_alarm.get_datetime()->tm_hour);
-      CPPUNIT_ASSERT_EQUAL(45, m_alarm.get_datetime()->tm_min);
+      CPPUNIT_ASSERT_EQUAL(expected_alarm, m_alarm);
 
       CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
       CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
@@ -323,15 +336,16 @@ protected:
       strncpy(&message[1], "01 01Y 10-09 03:45 D1440", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
 
-      CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
-      CPPUNIT_ASSERT_EQUAL(1, m_alarm.get_repeat());
-      CPPUNIT_ASSERT_EQUAL(INTERVAL_YEAR, m_alarm.get_repeat_interval());
-      CPPUNIT_ASSERT_EQUAL(1440, m_alarm.get_duration());
+      TM expected_time; set_default_alarm_time(&expected_time);
+      expected_time.tm_mon = OCT;
+      expected_time.tm_mday = 9;
+      expected_time.tm_hour = 3;
+      expected_time.tm_min = 45;
 
-      CPPUNIT_ASSERT_EQUAL(9, m_alarm.get_datetime()->tm_mon); // Month from 0 to 11
-      CPPUNIT_ASSERT_EQUAL(9, m_alarm.get_datetime()->tm_mday);
-      CPPUNIT_ASSERT_EQUAL(3, m_alarm.get_datetime()->tm_hour);
-      CPPUNIT_ASSERT_EQUAL(45, m_alarm.get_datetime()->tm_min);
+      Alarm expected_alarm = Alarm((INTERVAL)'Y', &expected_time, 1, 1440);
+      
+      CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
+      CPPUNIT_ASSERT_EQUAL(expected_alarm, m_alarm);
 
       CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
       CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
@@ -343,13 +357,13 @@ protected:
       strncpy(&message[1], "01 01Y 10-09", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
 
-
+      TM expected_time; set_default_alarm_time(&expected_time);
+      expected_time.tm_mon = OCT;
+      expected_time.tm_mday = 9;
+      Alarm expected_alarm = Alarm((INTERVAL)'Y', &expected_time, 1, 60);
+      
       CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
-      CPPUNIT_ASSERT_EQUAL(1, m_alarm.get_repeat());
-      CPPUNIT_ASSERT_EQUAL(9, m_alarm.get_datetime()->tm_mon); // Month from 0 to 11
-      CPPUNIT_ASSERT_EQUAL(9, m_alarm.get_datetime()->tm_mday);
-      CPPUNIT_ASSERT_EQUAL(0, m_alarm.get_datetime()->tm_hour); // Hour and minute should default to 00:00
-      CPPUNIT_ASSERT_EQUAL(0, m_alarm.get_datetime()->tm_min);
+      CPPUNIT_ASSERT_EQUAL(expected_alarm, m_alarm);
 
       CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
       CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
@@ -361,14 +375,11 @@ protected:
       strncpy(&message[1], "01 01Y", MAX_MESSAGE_LENGTH);
       CPPUNIT_ASSERT(m_message_handler->handle_message(message));
 
-
+      TM expected_time; set_default_alarm_time(&expected_time);
+      Alarm expected_alarm = Alarm((INTERVAL)'Y', &expected_time, 1, 60);
+      
       CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
-      CPPUNIT_ASSERT_EQUAL(1, m_alarm.get_repeat());
-      // Date should default to 1st January 00:00
-      CPPUNIT_ASSERT_EQUAL(0, m_alarm.get_datetime()->tm_mon); // Month from 0 to 11
-      CPPUNIT_ASSERT_EQUAL(1, m_alarm.get_datetime()->tm_mday);
-      CPPUNIT_ASSERT_EQUAL(0, m_alarm.get_datetime()->tm_hour); 
-      CPPUNIT_ASSERT_EQUAL(0, m_alarm.get_datetime()->tm_min);
+      CPPUNIT_ASSERT_EQUAL(expected_alarm, m_alarm);
 
       CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
       CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);

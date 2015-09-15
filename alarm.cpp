@@ -24,7 +24,24 @@
 #include "alarm.h"
 
 /*
- * Private Functions
+ * Public Functions
+ */
+
+void set_default_alarm_time(TM* tm)
+{
+	// Reset to 1st January 2000
+	tm->tm_year = 100;
+	tm->tm_mon = JAN;
+	tm->tm_mday = 1;
+	tm->tm_wday = SAT;
+	tm->tm_yday = 0;
+	tm->tm_hour = 0;
+	tm->tm_min = 0;
+	tm->tm_sec = 0;
+}
+
+/*
+ * Alarm Class
  */
 
 Alarm::Alarm()
@@ -48,15 +65,7 @@ Alarm::Alarm(INTERVAL interval, TM * alarm_time, int repeat, int duration)
 
 void Alarm::reset()
 {
-	m_datetime.tm_year = 0;
-	m_datetime.tm_mon = JAN;
-	m_datetime.tm_mday = 1;
-	m_datetime.tm_wday = THU;
-	m_datetime.tm_yday = 0;
-	m_datetime.tm_hour = 0;
-	m_datetime.tm_min = 0;
-	m_datetime.tm_sec = 0;
-
+	set_default_alarm_time(&m_datetime);
 	m_repeat = 1;
 	m_repeat_interval = INTERVAL_YEAR;
 	m_duration = 60;
@@ -67,7 +76,16 @@ void Alarm::reset()
 bool operator==(const Alarm& lhs, const Alarm& rhs)
 {
 	bool equal = true;
-	equal &= times_equal(&lhs.m_datetime, &rhs.m_datetime);
+	//equal &= times_equal(&lhs.m_datetime, &rhs.m_datetime);
+
+	//equal &= (lhs.m_datetime.tm_sec == rhs.m_datetime.tm_sec);
+	//equal &= (lhs.m_datetime.tm_min == rhs.m_datetime.tm_min);
+	//equal &= (lhs.m_datetime.tm_hour == rhs.m_datetime.tm_hour);
+	//equal &= (lhs.m_datetime.tm_mday == rhs.m_datetime.tm_mday);
+	//equal &= (lhs.m_datetime.tm_mon == rhs.m_datetime.tm_mon);
+	equal &= (lhs.m_datetime.tm_year == rhs.m_datetime.tm_year);
+	equal &= (lhs.m_datetime.tm_wday == rhs.m_datetime.tm_wday);
+	equal &= (lhs.m_datetime.tm_yday == rhs.m_datetime.tm_yday);
 
 	equal &= (lhs.m_repeat == rhs.m_repeat);
 	equal &= (lhs.m_repeat_interval == rhs.m_repeat_interval);
@@ -89,6 +107,7 @@ bool Alarm::to_string(ALARM_STRING * str) const
 	str->interval= m_repeat_interval;
 	str->space3 = ' ';
 	str->d = 'd';
+	str->null = '\0';
 
 	int duration = m_duration;
 	char c;
