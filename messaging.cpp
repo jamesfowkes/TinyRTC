@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 
 /*
  * Code Library Includes
@@ -110,7 +111,7 @@ static bool is_valid_interval(char interval)
  * sanity. The basic string is mm-dd hh:mm:ss
  * but all values are optional and default to 1st January 00:00 unless string specifies them.
  */
-static bool parse_datetime_for_interval(char interval, char * datetime_str, TM * datetime)
+static bool parse_datetime_for_interval(char interval, char const * datetime_str, TM * datetime)
 {
     bool success = true;
     int length = strlen(datetime_str);
@@ -196,6 +197,35 @@ static bool parse_datetime_for_interval(char interval, char * datetime_str, TM *
     }
 
     return success;
+}
+
+/* 
+ * try_get_duration_from_message
+ *
+ * A message may be suffixed with D where x is a number representing the number of minutes
+ * the alarm should be active for.
+ * The function works backwards from the end of the message to find the number (if there is one)
+ * 0 is returned otherwise.
+ */
+
+static int try_get_duration_from_message(char * message)
+{
+    int result = 0;
+    int multiplier = 1;
+
+    int c = strlen(message) - 1; // Start at end of message
+    while (isdigit(message[c]) && (c >= 0))
+    {
+        result += (message[c] - '0') * multiplier;
+        multiplier *= 10;
+        c--;
+    }
+
+    if (c < 0) { return 0; } // Ran out of chars to process
+
+    if (message[c] != 'D') { return 0;} // Digits not prefixed with 'D'
+
+    return result;
 }
 
 MessageHandler::MessageHandler(MSG_HANDLER_FUNCTIONS * callbacks)
@@ -314,8 +344,10 @@ bool MessageHandler::set_alarm_from_message(char * message)
     ALARM new_alarm;
     TM alarm_time;
 
+    if (!message) { return false; }
     if (!m_callbacks->set_alarm_fn) { return false; }
-    
+    if (strlen(message) == 0) { return false;}
+
     SET_ALARM_FORMAT_STRING * message_as_set_alarm_string = (SET_ALARM_FORMAT_STRING*)message;
 
     if (!parse_chars_to_int(&action_id, message_as_set_alarm_string->action_id, 2, get_action_id_range())) { return false; }
@@ -331,9 +363,11 @@ bool MessageHandler::set_alarm_from_message(char * message)
         return false; 
     }
 
+    int duration = try_get_duration_from_message(message);
+
     if (!days_in_month_valid(alarm_time.tm_mday, alarm_time.tm_mon, alarm_time.tm_year)) { return 0; }
 
-    result = alarm_make(&new_alarm, (INTERVAL)message_as_set_alarm_string->interval, &alarm_time, repeat);
+    result = alarm_make(&new_alarm, (INTERVAL)message_as_set_alarm_string->interval, &alarm_time, repeat, duration);
 
     result &= m_callbacks->set_alarm_fn(action_id, &new_alarm);
 

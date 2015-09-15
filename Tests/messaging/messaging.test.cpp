@@ -38,8 +38,10 @@ class MessagingTest : public CppUnit::TestFixture  {
    CPPUNIT_TEST(ValidSetRTCMessageTest);
    CPPUNIT_TEST(InvalidSetRTCMessageTest);
    CPPUNIT_TEST(GetRTCMessageTest);
+   CPPUNIT_TEST(SetAlarmMessageTestWithNoMessage);
    CPPUNIT_TEST(SetAlarmMessageTestWithWeeklyInterval);
    CPPUNIT_TEST(SetAlarmMessageTestWithFullDatetime);
+   CPPUNIT_TEST(SetAlarmMessageTestWithDuration);
    CPPUNIT_TEST(SetAlarmMessageTestWithPartialDatetime);
    CPPUNIT_TEST(SetAlarmMessageTestWithNoDatetime);
    CPPUNIT_TEST(SetAlarmMessageTestWithBadDatetime);
@@ -67,6 +69,8 @@ public:
       m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)] = true;
       time_cpy(&(m_alarm.datetime), &(pAlarm->datetime));
       m_alarm.repeat = pAlarm->repeat;
+      m_alarm.repeat_interval = pAlarm->repeat_interval;
+      m_alarm.duration = pAlarm->duration;
       m_alarm_id = alarm_id;
       return true;
    }
@@ -139,7 +143,10 @@ public:
       m_alarm.datetime.tm_isdst = -1;
 
       m_alarm.repeat = -1;
+      m_alarm.repeat_interval = (INTERVAL)-1;
+      m_alarm.duration = -1;
       m_alarm_id = -1;
+
 
       m_io_index = -1;
       m_io_type = (IO_TYPE)-1;
@@ -268,6 +275,15 @@ protected:
       CPPUNIT_ASSERT_EQUAL(23, (int)m_reply.length());
    }
 
+   void SetAlarmMessageTestWithNoMessage()
+   {
+      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
+      strncpy(&message[1], "", MAX_MESSAGE_LENGTH);
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
+      CPPUNIT_ASSERT_EQUAL(0, callbackSetCount());
+      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
+   }
+
    void SetAlarmMessageTestWithWeeklyInterval()
    {
       // Special case with different format to other intervals
@@ -280,9 +296,21 @@ protected:
       CPPUNIT_ASSERT_EQUAL((int)TUE, m_alarm.datetime.tm_wday);
       CPPUNIT_ASSERT_EQUAL(3, m_alarm.datetime.tm_hour);
       CPPUNIT_ASSERT_EQUAL(45, m_alarm.datetime.tm_min);
+      CPPUNIT_ASSERT_EQUAL(60, m_alarm.duration); // Duration defaults to 60 minutes
 
       CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
       CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
+
+      // Check that duration still defaults to 60 minutes when string ends with 'D'
+      strncpy(&message[1], "01 01W WED", MAX_MESSAGE_LENGTH);
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+
+      CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
+      CPPUNIT_ASSERT_EQUAL(1, m_alarm.repeat);
+      CPPUNIT_ASSERT_EQUAL((int)WED, m_alarm.datetime.tm_wday);
+      CPPUNIT_ASSERT_EQUAL(0, m_alarm.datetime.tm_hour);
+      CPPUNIT_ASSERT_EQUAL(0, m_alarm.datetime.tm_min);
+      CPPUNIT_ASSERT_EQUAL(60, m_alarm.duration); // Duration defaults to 60 minutes
    }
 
    void SetAlarmMessageTestWithFullDatetime()
@@ -294,6 +322,29 @@ protected:
 
       CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
       CPPUNIT_ASSERT_EQUAL(1, m_alarm.repeat);
+      CPPUNIT_ASSERT_EQUAL(INTERVAL_YEAR, m_alarm.repeat_interval);
+      CPPUNIT_ASSERT_EQUAL(60, m_alarm.duration); // Duration defaults to 60 minutes
+
+      CPPUNIT_ASSERT_EQUAL(9, m_alarm.datetime.tm_mon); // Month from 0 to 11
+      CPPUNIT_ASSERT_EQUAL(9, m_alarm.datetime.tm_mday);
+      CPPUNIT_ASSERT_EQUAL(3, m_alarm.datetime.tm_hour);
+      CPPUNIT_ASSERT_EQUAL(45, m_alarm.datetime.tm_min);
+
+      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
+      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
+   }
+
+   void SetAlarmMessageTestWithDuration()
+   {
+      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
+      strncpy(&message[1], "01 01Y 10-09 03:45 D1440", MAX_MESSAGE_LENGTH);
+      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+
+      CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
+      CPPUNIT_ASSERT_EQUAL(1, m_alarm.repeat);
+      CPPUNIT_ASSERT_EQUAL(INTERVAL_YEAR, m_alarm.repeat_interval);
+      CPPUNIT_ASSERT_EQUAL(1440, m_alarm.duration);
+
       CPPUNIT_ASSERT_EQUAL(9, m_alarm.datetime.tm_mon); // Month from 0 to 11
       CPPUNIT_ASSERT_EQUAL(9, m_alarm.datetime.tm_mday);
       CPPUNIT_ASSERT_EQUAL(3, m_alarm.datetime.tm_hour);
