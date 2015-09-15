@@ -8,6 +8,10 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#ifdef TEST
+#include <cppunit/TestAssert.h>
+#endif
+
 /*
  * Code Library Includes
  */
@@ -325,9 +329,7 @@ bool MessageHandler::get_rtc()
 
     TM tm;
     app_get_rtc_datetime(&tm);
-
-    tm.tm_mon++; // Convert 0-11 to 1-12 for conversion to string date
-    
+   
     new_reply(MSG_GET_RTC);
     time_to_datetime_string(&tm, (DT_FORMAT_STRING*)&s_reply[2]);
 
@@ -341,7 +343,7 @@ bool MessageHandler::set_alarm_from_message(char * message)
     bool result = false;
     int action_id;
     int repeat = 0;
-    ALARM new_alarm;
+    
     TM alarm_time;
 
     if (!message) { return false; }
@@ -367,8 +369,9 @@ bool MessageHandler::set_alarm_from_message(char * message)
 
     if (!days_in_month_valid(alarm_time.tm_mday, alarm_time.tm_mon, alarm_time.tm_year)) { return 0; }
 
-    result = alarm_make(&new_alarm, (INTERVAL)message_as_set_alarm_string->interval, &alarm_time, repeat, duration);
+    Alarm new_alarm = Alarm((INTERVAL)message_as_set_alarm_string->interval, &alarm_time, repeat, duration);
 
+    result = new_alarm.valid();
     result &= m_callbacks->set_alarm_fn(action_id, &new_alarm);
 
     return result;

@@ -30,7 +30,7 @@ typedef enum message_id MESSAGE_ID;
 #define MSG_MAX_ID MSG_ID_IDX(_MSG_MAX_ID)
 
 typedef bool (*MSG_SET_RTC_FN)(TM* tm);
-typedef bool (*MSG_SET_ALARM_FN)(int alarm_id, ALARM * pAlarm);
+typedef bool (*MSG_SET_ALARM_FN)(int alarm_id, Alarm * pAlarm);
 typedef bool (*MSG_CLEAR_ALARM_FN)(int alarm_id);
 typedef bool (*MSG_SET_TRIGGER_FN)(int io_index, char * pTriggerExpression);
 typedef bool (*MSG_CLEAR_TRIGGER_FN)(int io_index);

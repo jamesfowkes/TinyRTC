@@ -1,6 +1,10 @@
 #ifndef _ALARM_H_
 #define _ALARM_H_
 
+#ifdef TEST
+#include <string>
+#endif
+
 /*
  * Defines and typedefs
  */
@@ -15,19 +19,72 @@ enum interval
 };
 typedef enum interval INTERVAL;
 
-struct alarm_struct
-{
-	TM datetime;
-	int repeat;	// Repeat number - e.g if this is 2 for a weekly interval, the alarm will go off fortnightly.
-	INTERVAL repeat_interval; // Type of repeat
-	int duration; // How long alarm lasts
-	bool triggered;
-};
-typedef struct alarm_struct ALARM;
-
 /*
  * Public Function Prototypes
  */
-bool alarm_make(ALARM * alarm, INTERVAL interval, TM * time, int repeat, int duration);
+
+struct alarm_string
+{
+	DT_FORMAT_STRING datetime;
+	char space1;
+	char r;
+	char repeat[2];
+	char space2;
+	char i;
+	char interval;
+	char space3;
+	char d;
+	char duration[5];
+};
+typedef struct alarm_string ALARM_STRING;
+
+class Alarm
+{
+public:
+	Alarm();
+	Alarm(INTERVAL interval, TM * time, int repeat, int duration);
+
+	friend bool operator==(const Alarm& lhs, const Alarm& rhs);
+
+	void reset();
+	bool valid() { return m_valid; }
+	void print(char * buffer);
+
+	int get_duration() { return m_duration; }
+	int get_repeat() { return m_repeat; }
+	INTERVAL get_repeat_interval() { return m_repeat_interval; }
+	TM * get_datetime() { return &m_datetime; }
+
+	bool to_string(ALARM_STRING * str) const;
+
+private:
+	TM m_datetime;
+	int m_repeat;	// Repeat number - e.g if this is 2 for a weekly interval, the alarm will go off fortnightly.
+	INTERVAL m_repeat_interval; // Type of repeat
+	int m_duration; // How long alarm lasts
+	bool m_triggered;
+	bool m_valid;
+};
+
+#ifdef TEST
+namespace CppUnit
+{
+	template<>
+	struct assertion_traits<Alarm>   // specialization for the Alarm type
+	{
+		static bool equal(const Alarm& lhs, const Alarm& rhs)
+		{
+			return lhs == rhs;
+		}
+
+		static std::string toString(const Alarm& alarm)
+		{
+			ALARM_STRING buffer;
+			(void)alarm.to_string(&buffer);
+			return "'" + std::string((char*)&buffer) + "'";
+		}
+	};
+};
+#endif
 
 #endif
