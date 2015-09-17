@@ -57,6 +57,8 @@ public:
 
 	bool to_string(ALARM_STRING * str) const;
 
+	bool set_time(TM * time);
+	bool is_triggered() { return m_triggered; }
 private:
 	TM m_datetime;
 	int m_repeat;	// Repeat number - e.g if this is 2 for a weekly interval, the alarm will go off fortnightly.

@@ -63,6 +63,39 @@ Alarm::Alarm(INTERVAL interval, TM * alarm_time, int repeat, int duration)
     m_valid = true;
 }
 
+bool Alarm::set_time(TM * current_time)
+{
+	if (!current_time) { return false; }
+
+	bool times_match = true;
+
+	switch (m_repeat_interval)
+	{
+	case INTERVAL_YEAR:
+		times_match &= (m_datetime.tm_mon == current_time->tm_mon);
+		// Deliberate fall-through!
+	case INTERVAL_MONTH:
+		times_match &= (m_datetime.tm_mday == current_time->tm_mday);
+		// Deliberate fall-through!
+	case INTERVAL_DAY:
+		times_match &= (m_datetime.tm_hour == current_time->tm_hour);
+		// Deliberate fall-through!
+	case INTERVAL_HOUR:
+		times_match &= (m_datetime.tm_min == current_time->tm_min);
+		break;
+	case INTERVAL_WEEK:
+		// Weekly interval is a special case
+		times_match &= (m_datetime.tm_wday == current_time->tm_wday);
+		times_match &= (m_datetime.tm_hour == current_time->tm_hour);
+		times_match &= (m_datetime.tm_min == current_time->tm_min);
+		break;
+	}
+
+	m_triggered = times_match;
+	
+	return m_triggered;
+}
+
 void Alarm::reset()
 {
 	set_default_alarm_time(&m_datetime);
@@ -76,13 +109,13 @@ void Alarm::reset()
 bool operator==(const Alarm& lhs, const Alarm& rhs)
 {
 	bool equal = true;
-	//equal &= times_equal(&lhs.m_datetime, &rhs.m_datetime);
+	equal &= times_equal(&lhs.m_datetime, &rhs.m_datetime);
 
-	//equal &= (lhs.m_datetime.tm_sec == rhs.m_datetime.tm_sec);
-	//equal &= (lhs.m_datetime.tm_min == rhs.m_datetime.tm_min);
-	//equal &= (lhs.m_datetime.tm_hour == rhs.m_datetime.tm_hour);
-	//equal &= (lhs.m_datetime.tm_mday == rhs.m_datetime.tm_mday);
-	//equal &= (lhs.m_datetime.tm_mon == rhs.m_datetime.tm_mon);
+	equal &= (lhs.m_datetime.tm_sec == rhs.m_datetime.tm_sec);
+	equal &= (lhs.m_datetime.tm_min == rhs.m_datetime.tm_min);
+	equal &= (lhs.m_datetime.tm_hour == rhs.m_datetime.tm_hour);
+	equal &= (lhs.m_datetime.tm_mday == rhs.m_datetime.tm_mday);
+	equal &= (lhs.m_datetime.tm_mon == rhs.m_datetime.tm_mon);
 	equal &= (lhs.m_datetime.tm_year == rhs.m_datetime.tm_year);
 	equal &= (lhs.m_datetime.tm_wday == rhs.m_datetime.tm_wday);
 	equal &= (lhs.m_datetime.tm_yday == rhs.m_datetime.tm_yday);
