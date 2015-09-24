@@ -79,14 +79,13 @@ static int * get_input_index_range()
 
 static bool message_is_correct_rtc_format(char * message)
 {
-    // Date time format is YY-MM-DD hh:mm:ss
+    // Date time format is DDD YY-MM-DD hh:mm:ss
     // This function only validates FORMAT, not content
     DT_FORMAT_STRING * message_as_time = (DT_FORMAT_STRING * )message;
 
     bool valid = true;
     
-    valid &= strlen(message) == sizeof(DT_FORMAT_STRING);
-
+    valid &= strlen(message) == sizeof(DT_FORMAT_STRING)-1;
     valid &= message_as_time->hyphen1 == '-';
     valid &= message_as_time->hyphen2 == '-';
     valid &= message_as_time->space1 == ' ';
@@ -304,7 +303,7 @@ bool MessageHandler::set_rtc_from_message(char * message)
     TM new_time;
 
     if (!message_is_correct_rtc_format(message)) { return false; }
-
+    
     // Convert each part of the message to integer
     DT_FORMAT_STRING * message_as_time = (DT_FORMAT_STRING*)message;
 
@@ -322,7 +321,6 @@ bool MessageHandler::set_rtc_from_message(char * message)
 
     // Got this far, everything is valid
     result = m_callbacks->set_rtc_fn(&new_time);
-
     return result;
 }
 

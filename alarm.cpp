@@ -49,60 +49,81 @@ Alarm::Alarm()
 	reset();
 }
 
-Alarm::Alarm(INTERVAL interval, TM * alarm_time, int repeat, int duration)
+Alarm::Alarm(INTERVAL interval, TM const * const alarm_time, int repeat, int duration)
 {
 	if (!alarm_time) { return; }
 
 	time_cpy(&m_datetime, alarm_time);
-	m_repeat = repeat;
-	m_repeat_interval = interval;
-
+	m_alarm_interval_count = repeat;
+	m_alarm_interval_period = interval;
+	m_current_trigger_count = 0;
 	m_duration = duration ? duration : 60;
     m_triggered = false;
 
     m_valid = true;
 }
 
-bool Alarm::set_time(TM * current_time)
+void Alarm::update_deactivate_time(TM const * const current_time)
+{
+	m_deactivate_time_seconds = time_to_unix_seconds(current_time) + (m_duration * 60);
+}
+
+bool Alarm::set_current_time(TM const * const current_time)
 {
 	if (!current_time) { return false; }
 
-	bool times_match = true;
-
-	switch (m_repeat_interval)
+	if (!m_triggered)
 	{
-	case INTERVAL_YEAR:
-		times_match &= (m_datetime.tm_mon == current_time->tm_mon);
-		// Deliberate fall-through!
-	case INTERVAL_MONTH:
-		times_match &= (m_datetime.tm_mday == current_time->tm_mday);
-		// Deliberate fall-through!
-	case INTERVAL_DAY:
-		times_match &= (m_datetime.tm_hour == current_time->tm_hour);
-		// Deliberate fall-through!
-	case INTERVAL_HOUR:
-		times_match &= (m_datetime.tm_min == current_time->tm_min);
-		break;
-	case INTERVAL_WEEK:
-		// Weekly interval is a special case
-		times_match &= (m_datetime.tm_wday == current_time->tm_wday);
-		times_match &= (m_datetime.tm_hour == current_time->tm_hour);
-		times_match &= (m_datetime.tm_min == current_time->tm_min);
-		break;
+		bool times_match = true;
+
+		switch (m_alarm_interval_period)
+		{
+		case INTERVAL_YEAR:
+			times_match &= (m_datetime.tm_mon == current_time->tm_mon);
+			// Deliberate fall-through!
+		case INTERVAL_MONTH:
+			times_match &= (m_datetime.tm_mday == current_time->tm_mday);
+			// Deliberate fall-through!
+		case INTERVAL_DAY:
+			times_match &= (m_datetime.tm_hour == current_time->tm_hour);
+			// Deliberate fall-through!
+		case INTERVAL_HOUR:
+			times_match &= (m_datetime.tm_min == current_time->tm_min);
+			break;
+		case INTERVAL_WEEK:
+			// Weekly interval is a special case
+			times_match &= (m_datetime.tm_wday == current_time->tm_wday);
+			times_match &= (m_datetime.tm_hour == current_time->tm_hour);
+			times_match &= (m_datetime.tm_min == current_time->tm_min);
+			break;
+		}
+
+		if (times_match) { m_current_trigger_count++; }
+
+		m_triggered = (m_current_trigger_count == m_alarm_interval_count);
+
+		if (m_triggered)
+		{
+			m_current_trigger_count = 0;
+			update_deactivate_time(current_time);
+		}
+	}
+	else
+	{
+		UNIX_TIMESTAMP current_time_seconds = time_to_unix_seconds(current_time);
+		m_triggered = current_time_seconds <= m_deactivate_time_seconds;
 	}
 
-	m_triggered = times_match;
-	
 	return m_triggered;
 }
 
 void Alarm::reset()
 {
 	set_default_alarm_time(&m_datetime);
-	m_repeat = 1;
-	m_repeat_interval = INTERVAL_YEAR;
+	m_alarm_interval_count = 1;
+	m_alarm_interval_period = INTERVAL_YEAR;
 	m_duration = 60;
-
+	m_current_trigger_count = 0;
     m_triggered = false;
 }
 
@@ -111,8 +132,8 @@ bool operator==(const Alarm& lhs, const Alarm& rhs)
 	bool equal = true;
 	equal &= times_equal(&lhs.m_datetime, &rhs.m_datetime);
 
-	equal &= (lhs.m_repeat == rhs.m_repeat);
-	equal &= (lhs.m_repeat_interval == rhs.m_repeat_interval);
+	equal &= (lhs.m_alarm_interval_count == rhs.m_alarm_interval_count);
+	equal &= (lhs.m_alarm_interval_period == rhs.m_alarm_interval_period);
 	equal &= (lhs.m_duration == rhs.m_duration);
 
 	return equal;
@@ -124,11 +145,11 @@ bool Alarm::to_string(ALARM_STRING * str) const
 
 	str->space1 = ' ';
 	str->r = 'r';
-	str->repeat[1] = (m_repeat % 10) + '0';
-	str->repeat[0] = (m_repeat / 10) + '0';
+	str->repeat[1] = (m_alarm_interval_count % 10) + '0';
+	str->repeat[0] = (m_alarm_interval_count / 10) + '0';
 	str->space2 = ' ';
 	str->i = 'i';
-	str->interval= m_repeat_interval;
+	str->interval= m_alarm_interval_period;
 	str->space3 = ' ';
 	str->d = 'd';
 	str->null = '\0';

@@ -200,8 +200,11 @@ private:
 
    void build_message(char id, char const * pMessageBody)
    {
+      char len = strlen(pMessageBody);
+
       m_message[0] = id;
-      strncpy(&m_message[1], pMessageBody, MAX_MESSAGE_LENGTH-1);
+      (void)strncpy(&m_message[1], pMessageBody, MAX_MESSAGE_LENGTH-1);
+      m_message[len+1] = '\0';
    }
 
    void assert_valid_reply(char id)
