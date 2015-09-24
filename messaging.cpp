@@ -120,15 +120,6 @@ static bool parse_datetime_for_interval(char interval, char const * datetime_str
     bool success = true;
     int length = strlen(datetime_str);
 
-    // Default time to 00-01-01 00:00:00 (where 00 is 2000)
-    datetime->tm_year = 100;
-    datetime->tm_mon = 0; // Month from 0 to 11
-    datetime->tm_mday = 1;
-    datetime->tm_hour = 0;
-    datetime->tm_min = 0;
-    datetime->tm_sec = 0;
-    datetime->tm_wday = SAT;
-
     /* Parse by cascading from year to hour */
     if (interval == INTERVAL_YEAR)
     {
@@ -253,6 +244,8 @@ bool MessageHandler::handle_message(char * message)
     
     bool result = false;
     
+    bool send_standard_reply = true;
+
     if (!m_callbacks) { return false; }
 
     switch(id)
@@ -262,6 +255,7 @@ bool MessageHandler::handle_message(char * message)
         break;
     case MSG_GET_RTC:
         result = get_rtc();
+        send_standard_reply = false;
         break;
     case MSG_SET_ALARM:
         result = set_alarm_from_message(&message[1]);
@@ -280,12 +274,22 @@ bool MessageHandler::handle_message(char * message)
         break;
     case MSG_READ_INPUT:
         result = read_input_from_message(&message[1]);
+        send_standard_reply = false;
         break;
     case MSG_RESET:
         result = reset_from_message();
+        send_standard_reply = false;
         break;
     default:
         break;
+    }
+
+    if (send_standard_reply)
+    {
+        s_reply[0] = MSG_REPLY;
+        s_reply[1] = id;
+        strncpy(&s_reply[2], result ? " OK" : " FAIL",MAX_MESSAGE_LENGTH-2);
+        m_callbacks->reply_fn(s_reply);
     }
     
     return result;
@@ -346,6 +350,7 @@ bool MessageHandler::set_alarm_from_message(char * message)
     int repeat = 0;
     
     TM alarm_time;
+    set_default_alarm_time(&alarm_time);
 
     if (!message) { return false; }
     if (!m_callbacks->set_alarm_fn) { return false; }
@@ -480,6 +485,10 @@ bool MessageHandler::reset_from_message()
 
     if (!m_callbacks->reset_fn) { return false; }
 
+    new_reply(MSG_RESET);
+    strncpy(&s_reply[2], "RESET", MAX_MESSAGE_LENGTH-2);
+    
+    (void)m_callbacks->reply_fn(s_reply);
     result = m_callbacks->reset_fn();
 
     return result;    

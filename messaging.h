@@ -7,7 +7,7 @@
 
 #define MAX_MESSAGE_LENGTH (32)
 
-// Note: these message IDs start at character '0', not 0!
+// Note: these message IDs do not start at 0!
 // This will affect how any loops or arrays using this enumeration are iterated/indexed!
 
 enum message_id
@@ -21,8 +21,8 @@ enum message_id
     MSG_SET_IO_TYPE,
     MSG_READ_INPUT,
     MSG_RESET,
-    MSG_REPLY,
-    _MSG_MAX_ID
+    _MSG_MAX_ID,
+    MSG_REPLY = '>'
 };
 typedef enum message_id MESSAGE_ID;
 

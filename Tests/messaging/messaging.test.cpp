@@ -37,7 +37,16 @@ class MessagingTest : public CppUnit::TestFixture  {
 
    CPPUNIT_TEST_SUITE(MessagingTest);
    CPPUNIT_TEST(ValidSetRTCMessageTest);
-   CPPUNIT_TEST(InvalidSetRTCMessageTest);
+   CPPUNIT_TEST(InvalidSetRTCMessageTestMonthLessThanOne);
+   CPPUNIT_TEST(InvalidSetRTCMessageTestMonthMoreThanTwelve);
+   CPPUNIT_TEST(InvalidSetRTCMessageTestDateLessThanOne);
+   CPPUNIT_TEST(InvalidSetRTCMessageTestDateExceedsMaximumForFeb);
+   CPPUNIT_TEST(InvalidSetRTCMessageTestExceedsMaximumfor30DayMonth);
+   CPPUNIT_TEST(InvalidSetRTCMessageTestExceedsMaximumfor31DayMonth);
+   CPPUNIT_TEST(InvalidSetRTCMessageTestDayDoesNotExist);
+   CPPUNIT_TEST(InvalidSetRTCMessageTestHourGreaterThan23);
+   CPPUNIT_TEST(InvalidSetRTCMessageTestMinuteGreaterThan59);
+   CPPUNIT_TEST(InvalidSetRTCMessageTestSecondGreaterThan59);
    CPPUNIT_TEST(GetRTCMessageTest);
    CPPUNIT_TEST(SetAlarmMessageTestWithNoMessage);
    CPPUNIT_TEST(SetAlarmMessageTestWithWeeklyInterval);
@@ -46,13 +55,22 @@ class MessagingTest : public CppUnit::TestFixture  {
    CPPUNIT_TEST(SetAlarmMessageTestWithDuration);
    CPPUNIT_TEST(SetAlarmMessageTestWithPartialDatetime);
    CPPUNIT_TEST(SetAlarmMessageTestWithNoDatetime);
-   CPPUNIT_TEST(SetAlarmMessageTestWithBadDatetime);
+   CPPUNIT_TEST(SetAlarmMessageTestWithBadIntervalSetting);
+   CPPUNIT_TEST(SetAlarmMessageTestWithBadMonthSetting);
+   CPPUNIT_TEST(SetAlarmMessageTestWithBadDateSetting);
+   CPPUNIT_TEST(SetAlarmMessageTestWithBadHourSetting);
+   CPPUNIT_TEST(SetAlarmMessageTestWithBadMinuteSetting);
+   CPPUNIT_TEST(SetAlarmMessageTestWithMalformedSetting);
    CPPUNIT_TEST(SetAlarmMessageTestActionID);
+   CPPUNIT_TEST(SetAlarmMessageTestInvalidActionID);
    CPPUNIT_TEST(SetAlarmMessageTestRepeatCount);
-   CPPUNIT_TEST(ClrAlarmMessageTest);
+   CPPUNIT_TEST(SetAlarmMessageTestInvalidRepeatCount);
+   CPPUNIT_TEST(ClrAlarmValidMessageTest);
+   CPPUNIT_TEST(ClrAlarmInvalidMessageTest);
    CPPUNIT_TEST(SetTriggerMessageTest);
    CPPUNIT_TEST(ClearTriggerMessageTest);
    CPPUNIT_TEST(SetIOTypeMessageTest);
+   CPPUNIT_TEST(SetIOTypeInvalidMessageTest);
    CPPUNIT_TEST(ReadInputMessageTest);
    CPPUNIT_TEST(ResetMessageTest);
    CPPUNIT_TEST_SUITE_END();
@@ -113,7 +131,6 @@ public:
    bool Reply_callback(char * message)
    {
       m_reply = std::string(message);
-      m_callback_flags[MSG_ID_IDX(MSG_REPLY)] = true;
       return true;
    }
 
@@ -130,6 +147,8 @@ public:
       m_callbacks.set_io_type_fn = set_io_type_callback;
       m_callbacks.reset_fn = reset_callback;
       m_callbacks.reply_fn = reply_callback;
+
+      m_reply[0] = '\0';
 
       m_alarm.reset();
       m_alarm_id = -1;
@@ -162,11 +181,12 @@ private:
 
    int m_io_trigger;
 
+   char m_message[MAX_MESSAGE_LENGTH];
    MessageHandler * m_message_handler;
 
    MSG_HANDLER_FUNCTIONS m_callbacks;
 
-   int callbackSetCount()
+   int callback_set_count()
    {
       uint8_t count = 0;
 
@@ -178,14 +198,70 @@ private:
       return count;
    }
 
+   void build_message(char id, char const * pMessageBody)
+   {
+      m_message[0] = id;
+      strncpy(&m_message[1], pMessageBody, MAX_MESSAGE_LENGTH-1);
+   }
+
+   void assert_valid_reply(char id)
+   {
+      std::ostringstream os;
+      os << (char)MSG_REPLY << id << " OK";
+      std::string expected = os.str();
+      CPPUNIT_ASSERT_EQUAL(expected, m_reply);
+   }
+
+   void assert_invalid_reply(char id)
+   {
+      std::ostringstream os;
+      os << (char)MSG_REPLY << id << " FAIL";
+      std::string expected = os.str();
+      CPPUNIT_ASSERT_EQUAL(expected, m_reply);
+   }
+
+   void clear_reply() { m_reply[0] = '\0'; }
+
+   void assert_message_passes_on_handling(bool message_callback_expected, std::string * expected_reply = NULL)
+   {
+      char id = m_message[0];
+      CPPUNIT_ASSERT(m_message_handler->handle_message(m_message));
+      if (message_callback_expected)
+      {
+         CPPUNIT_ASSERT_EQUAL(1, callback_set_count());
+         CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(id)]);
+      }
+      else
+      {
+         CPPUNIT_ASSERT_EQUAL(0, callback_set_count());
+         CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(id)]);  
+      }
+
+      if (expected_reply)
+      {
+         CPPUNIT_ASSERT_EQUAL(*expected_reply, m_reply);
+      }
+      else
+      {
+         assert_valid_reply(id);
+      }
+   }
+
+   void assert_message_fails_on_handling()
+   {
+      char id = m_message[0];
+      CPPUNIT_ASSERT(!m_message_handler->handle_message(m_message));
+      CPPUNIT_ASSERT_EQUAL(0, callback_set_count());
+      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(id)]);
+      assert_invalid_reply(id);
+   }
+
 protected:
 
    void ValidSetRTCMessageTest()
    {
-      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_RTC};
-      strncpy(&message[1], "SAT 15-08-01 18:07:37", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
+      build_message(MSG_SET_RTC, "SAT 15-08-01 18:07:37");
+      assert_message_passes_on_handling(true);
 
       CPPUNIT_ASSERT_EQUAL(15, m_time.tm_year);
       CPPUNIT_ASSERT_EQUAL(7, m_time.tm_mon); // Month from 0 to 11
@@ -194,108 +270,106 @@ protected:
       CPPUNIT_ASSERT_EQUAL(18, m_time.tm_hour);
       CPPUNIT_ASSERT_EQUAL(07, m_time.tm_min);
       CPPUNIT_ASSERT_EQUAL(37, m_time.tm_sec);
-
-      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
    }
 
-   void InvalidSetRTCMessageTest()
+   void InvalidSetRTCMessageTestMonthLessThanOne()
    {
-      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_RTC};
-      strncpy(&message[1], "SAT 15-00-01 18:07:37", MAX_MESSAGE_LENGTH); // Bad month (< 1)
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
+      build_message(MSG_SET_RTC, "SAT 15-00-01 18:07:37");
+      assert_message_fails_on_handling();
+   }
 
-      strncpy(&message[1], "SAT 15-13-01 18:07:37", MAX_MESSAGE_LENGTH); // Bad month (> 12)
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
+   void InvalidSetRTCMessageTestMonthMoreThanTwelve()
+   {
+      build_message(MSG_SET_RTC, "SAT 15-13-01 18:07:37");
+      assert_message_fails_on_handling();
+   }
 
-      strncpy(&message[1], "SAT 15-08-00 18:07:37", MAX_MESSAGE_LENGTH); // Bad date (< 1)
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
-
-      strncpy(&message[1], "SAT 15-02-29 18:07:37", MAX_MESSAGE_LENGTH); // Bad date (> 28 for February)
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
-
-      strncpy(&message[1], "MAN 15-02-28 18:07:37", MAX_MESSAGE_LENGTH); // Bad day
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
-
-      strncpy(&message[1], "SAT 15-04-31 18:07:37", MAX_MESSAGE_LENGTH); // Bad date (> 30 for April)
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
-
-      strncpy(&message[1], "SAT 15-01-32 18:07:37", MAX_MESSAGE_LENGTH); // Bad date (> 31 for January)
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
-
-      strncpy(&message[1], "SAT 15-01-01 24:07:37", MAX_MESSAGE_LENGTH); // Bad time (> 23 for hour)
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
+   void InvalidSetRTCMessageTestDateLessThanOne()
+   {
+      build_message(MSG_SET_RTC, "SAT 15-08-00 18:07:37");
+      assert_message_fails_on_handling();
+   }
    
-      strncpy(&message[1], "SAT 15-01-01 18:60:37", MAX_MESSAGE_LENGTH); // Bad time (> 59 for minute)
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
+   void InvalidSetRTCMessageTestDateExceedsMaximumForFeb()
+   {
+      build_message(MSG_SET_RTC, "SAT 15-08-00 18:07:37");
+      assert_message_fails_on_handling();
+   }
 
-      strncpy(&message[1], "SAT 15-01-01 18:07:60", MAX_MESSAGE_LENGTH); // Bad time (> 59 for second)
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_RTC)]);
+   void InvalidSetRTCMessageTestExceedsMaximumfor30DayMonth()
+   {
+      build_message(MSG_SET_RTC, "SAT 15-04-31 18:07:37");
+      assert_message_fails_on_handling();
+   }
 
-      CPPUNIT_ASSERT_EQUAL(0, callbackSetCount());
+   void InvalidSetRTCMessageTestExceedsMaximumfor31DayMonth()
+   {
+      build_message(MSG_SET_RTC, "SAT 15-01-32 18:07:37");
+      assert_message_fails_on_handling();
+   }
+
+   void InvalidSetRTCMessageTestDayDoesNotExist()
+   {
+      build_message(MSG_SET_RTC, "??? 15-02-28 18:07:37");
+      assert_message_fails_on_handling();
+   }
+
+   void InvalidSetRTCMessageTestHourGreaterThan23()
+   {
+      build_message(MSG_SET_RTC, "SAT 15-01-01 24:07:37");
+      assert_message_fails_on_handling();
+   }
+
+   void InvalidSetRTCMessageTestMinuteGreaterThan59()
+   {
+      build_message(MSG_SET_RTC, "SAT 15-01-01 18:60:37");
+      assert_message_fails_on_handling();
+   }
+
+   void InvalidSetRTCMessageTestSecondGreaterThan59()
+   {
+      build_message(MSG_SET_RTC, "SAT 15-01-01 18:07:60");
+      assert_message_fails_on_handling();
    }
 
    void GetRTCMessageTest()
    {
-      m_reply[0] = '\0';
-      char message[MAX_MESSAGE_LENGTH] = {MSG_GET_RTC};
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
-
-      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_REPLY)]);
-      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
-        
+      build_message(MSG_GET_RTC, "");
       std::string expected = std::string("  TUE 13-05-21 17:42:23");
       expected[0] = MSG_REPLY;
       expected[1] = MSG_GET_RTC;
+      assert_message_passes_on_handling(false, &expected);
 
-      CPPUNIT_ASSERT_EQUAL(expected, m_reply);
       CPPUNIT_ASSERT_EQUAL(23, (int)m_reply.length());
    }
 
    void SetAlarmMessageTestWithNoMessage()
    {
-      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
-      strncpy(&message[1], "", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT_EQUAL(0, callbackSetCount());
-      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
+      build_message(MSG_SET_ALARM, "");
+      assert_message_fails_on_handling();
    }
 
    void SetAlarmMessageTestWithWeeklyInterval()
    {
       // Special case with different format to other intervals
-      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
-      strncpy(&message[1], "01 01W TUE 03:45", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
-
+      build_message(MSG_SET_ALARM, "01 01W TUE 03:45");
+      assert_message_passes_on_handling(true);
+      
       TM expected_time; set_default_alarm_time(&expected_time);
       expected_time.tm_hour = 3;
       expected_time.tm_min = 45;
       expected_time.tm_wday = TUE;
-
       Alarm expected_alarm = Alarm((INTERVAL)'W', &expected_time, 1, 60);
+
       CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
       CPPUNIT_ASSERT_EQUAL(expected_alarm, m_alarm);
-
-      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
-      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
    }
 
    void SetAlarmMessageTestWithWeeklyIntervalOnWedDoesNotFailOnDuration()
    {
       // Check that duration still defaults to 60 minutes when string ends with 'D'
-      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
-      strncpy(&message[1], "01 01W WED", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      build_message(MSG_SET_ALARM, "01 01W WED");
+      assert_message_passes_on_handling(true);
 
       TM expected_time; set_default_alarm_time(&expected_time);
       expected_time.tm_wday = WED;
@@ -303,17 +377,13 @@ protected:
       Alarm expected_alarm = Alarm((INTERVAL)'W', &expected_time, 1, 60);
 
       CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
-      CPPUNIT_ASSERT_EQUAL(expected_alarm, m_alarm);
-
-      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
-      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
+      CPPUNIT_ASSERT_EQUAL(expected_alarm, m_alarm);     
    }
 
    void SetAlarmMessageTestWithFullDatetime()
    {
-      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
-      strncpy(&message[1], "01 01Y 10-09 03:45", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      build_message(MSG_SET_ALARM, "01 01Y 10-09 03:45");
+      assert_message_passes_on_handling(true);
 
       TM expected_time; set_default_alarm_time(&expected_time);
       expected_time.tm_mon = OCT;
@@ -325,16 +395,12 @@ protected:
       
       CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
       CPPUNIT_ASSERT_EQUAL(expected_alarm, m_alarm);
-
-      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
-      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
    }
 
    void SetAlarmMessageTestWithDuration()
    {
-      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
-      strncpy(&message[1], "01 01Y 10-09 03:45 D1440", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      build_message(MSG_SET_ALARM, "01 01Y 10-09 03:45 D1440");
+      assert_message_passes_on_handling(true);
 
       TM expected_time; set_default_alarm_time(&expected_time);
       expected_time.tm_mon = OCT;
@@ -346,16 +412,12 @@ protected:
       
       CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
       CPPUNIT_ASSERT_EQUAL(expected_alarm, m_alarm);
-
-      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
-      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
    }
 
    void SetAlarmMessageTestWithPartialDatetime()
    {
-      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
-      strncpy(&message[1], "01 01Y 10-09", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      build_message(MSG_SET_ALARM, "01 01Y 10-09");
+      assert_message_passes_on_handling(true);
 
       TM expected_time; set_default_alarm_time(&expected_time);
       expected_time.tm_mon = OCT;
@@ -364,231 +426,184 @@ protected:
       
       CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
       CPPUNIT_ASSERT_EQUAL(expected_alarm, m_alarm);
-
-      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
-      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
    }
 
    void SetAlarmMessageTestWithNoDatetime()
    {
-      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
-      strncpy(&message[1], "01 01Y", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      build_message(MSG_SET_ALARM, "01 01Y");
+      assert_message_passes_on_handling(true);
 
       TM expected_time; set_default_alarm_time(&expected_time);
       Alarm expected_alarm = Alarm((INTERVAL)'Y', &expected_time, 1, 60);
       
       CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
       CPPUNIT_ASSERT_EQUAL(expected_alarm, m_alarm);
-
-      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
-      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
    }
 
-   void SetAlarmMessageTestWithBadDatetime()
+   void SetAlarmMessageTestWithBadIntervalSetting()
    {
-      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
-      strncpy(&message[1], "01 01A", MAX_MESSAGE_LENGTH); // Bad interval setting
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
+      build_message(MSG_SET_ALARM, "01 01A");
+      assert_message_fails_on_handling();
+   }
 
-      strncpy(&message[1], "01 01Y 13", MAX_MESSAGE_LENGTH); // Bad month setting
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
+   void SetAlarmMessageTestWithBadMonthSetting()
+   {
+      build_message(MSG_SET_ALARM, "01 01Y 13");
+      assert_message_fails_on_handling();
+   }
 
-      strncpy(&message[1], "01 01Y 12-32", MAX_MESSAGE_LENGTH); // Bad date setting
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
+   void SetAlarmMessageTestWithBadDateSetting()
+   {
+      build_message(MSG_SET_ALARM, "01 01Y 12-32");
+      assert_message_fails_on_handling();
+   }
 
-      strncpy(&message[1], "01 01Y 12-31 24:00", MAX_MESSAGE_LENGTH); // Bad hour setting
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-          
-      strncpy(&message[1], "01 01Y 12-31 23:60", MAX_MESSAGE_LENGTH); // Bad minute setting
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
+   void SetAlarmMessageTestWithBadHourSetting()
+   {      
+      build_message(MSG_SET_ALARM, "01 01Y 12-31 24:00");
+      assert_message_fails_on_handling();
+   }
 
-      strncpy(&message[1], "01 01Y 12/31 2359", MAX_MESSAGE_LENGTH); // Malformed datetime string
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
+   void SetAlarmMessageTestWithBadMinuteSetting()
+   {
+      build_message(MSG_SET_ALARM, "01 01Y 12-31 23:60");
+      assert_message_fails_on_handling();
+   }
 
-      CPPUNIT_ASSERT_EQUAL(0, callbackSetCount());
-      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
+   void SetAlarmMessageTestWithMalformedSetting()
+   {
+      build_message(MSG_SET_ALARM, "01 01Y 12/31 2359");
+      assert_message_fails_on_handling();
    }
 
    void SetAlarmMessageTestActionID()
+   {      
+      build_message(MSG_SET_ALARM, "01 01Y");
+      assert_message_passes_on_handling(true);
+
+      CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
+      
+      clear_reply();
+      build_message(MSG_SET_ALARM, "06 01Y");
+      assert_message_passes_on_handling(true);
+
+      CPPUNIT_ASSERT_EQUAL(6, m_alarm_id);
+   }
+
+   void SetAlarmMessageTestInvalidActionID()
    {
-      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
-
-      strncpy(&message[1], "02 01Y", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT_EQUAL(2, m_alarm_id);
-
-      strncpy(&message[1], "03 01Y", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT_EQUAL(3, m_alarm_id);
-
-      strncpy(&message[1], "16 01Y", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT_EQUAL(16, m_alarm_id);
-
-      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
-      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
-
-      // Invalid action ID
-      m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)] = false;
-      strncpy(&message[1], "17 01Y", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT_EQUAL(16, m_alarm_id);
-      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
+      build_message(MSG_SET_ALARM, "17 01Y");
+      assert_message_fails_on_handling();
+      CPPUNIT_ASSERT_EQUAL(-1, m_alarm_id);
    }
 
    void SetAlarmMessageTestRepeatCount()
    {
-      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_ALARM};
-
-      strncpy(&message[1], "01 01Y", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      build_message(MSG_SET_ALARM, "01 01Y");
+      assert_message_passes_on_handling(true);
       CPPUNIT_ASSERT_EQUAL(1, m_alarm.get_repeat());
  
-      strncpy(&message[1], "01 02Y", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      build_message(MSG_SET_ALARM, "01 02Y");
+      assert_message_passes_on_handling(true);
       CPPUNIT_ASSERT_EQUAL(2, m_alarm.get_repeat());
 
-      strncpy(&message[1], "01 50Y", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      build_message(MSG_SET_ALARM, "01 50Y");
+      assert_message_passes_on_handling(true);
       CPPUNIT_ASSERT_EQUAL(50, m_alarm.get_repeat());
-
-      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
-      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
-
-      // Invalid repeat count
-      m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)] = false;
-      strncpy(&message[1], "01 51Y", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_ALARM)]);
    }
 
-   void ClrAlarmMessageTest()
+   void SetAlarmMessageTestInvalidRepeatCount()
    {
-      char message[MAX_MESSAGE_LENGTH] = {MSG_CLEAR_ALARM};
-      strncpy(&message[1], "01", MAX_MESSAGE_LENGTH);
+      build_message(MSG_SET_ALARM, "01 51Y");
+      assert_message_fails_on_handling();
+   }
 
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+   void ClrAlarmValidMessageTest()
+   {
+      build_message(MSG_CLEAR_ALARM, "01");
+      assert_message_passes_on_handling(true);
       CPPUNIT_ASSERT_EQUAL(1, m_alarm_id);
 
-      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
-      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_CLEAR_ALARM)]);
-
-      strncpy(&message[1], "02", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      build_message(MSG_CLEAR_ALARM, "02");
+      assert_message_passes_on_handling(true);
       CPPUNIT_ASSERT_EQUAL(2, m_alarm_id);
 
-      strncpy(&message[1], "16", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      build_message(MSG_CLEAR_ALARM, "16");
+      assert_message_passes_on_handling(true);
       CPPUNIT_ASSERT_EQUAL(16, m_alarm_id);
+   }
 
-      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
-      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_CLEAR_ALARM)]);
-
-      m_callback_flags[MSG_ID_IDX(MSG_CLEAR_ALARM)] = false;
-      strncpy(&message[1], "17", MAX_MESSAGE_LENGTH); // Invalid action ID
-      CPPUNIT_ASSERT_EQUAL(16, m_alarm_id);
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_CLEAR_ALARM)]);
+   void ClrAlarmInvalidMessageTest()
+   {
+      build_message(MSG_CLEAR_ALARM, "17");
+      assert_message_fails_on_handling();
+      CPPUNIT_ASSERT_EQUAL(-1, m_alarm_id);
    }
 
    void SetTriggerMessageTest()
    {
-      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_TRIGGER};
-      strncpy(&message[1], "0 1&2|A1", MAX_MESSAGE_LENGTH);
-      
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
-
-      std::string expected = std::string("1&2|A1");
-      CPPUNIT_ASSERT_EQUAL(expected, m_reply);
-
-      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
-      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_TRIGGER)]);
+      build_message(MSG_SET_TRIGGER, "0 1&2|A1");
+      assert_message_passes_on_handling(true);
    }
 
    void ClearTriggerMessageTest()
    {
-      char message[MAX_MESSAGE_LENGTH] = {MSG_CLEAR_TRIGGER};
-      strncpy(&message[1], "0", MAX_MESSAGE_LENGTH);
-      
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
-      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_CLEAR_TRIGGER)]);
+      build_message(MSG_CLEAR_TRIGGER, "0");
+      assert_message_passes_on_handling(true);
    }
 
    void SetIOTypeMessageTest()
    {
-      char message[MAX_MESSAGE_LENGTH] = {MSG_SET_IO_TYPE};
-      strncpy(&message[1], "1 OUT", MAX_MESSAGE_LENGTH);
-
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      build_message(MSG_SET_IO_TYPE, "1 OUT");
+      assert_message_passes_on_handling(true);
       CPPUNIT_ASSERT_EQUAL(OUTPUT, m_io_type);
       CPPUNIT_ASSERT_EQUAL(1, m_io_index);
 
-      strncpy(&message[1], "2 IN", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      build_message(MSG_SET_IO_TYPE, "2 IN");
+      assert_message_passes_on_handling(true);
       CPPUNIT_ASSERT_EQUAL(INPUT, m_io_type);
       CPPUNIT_ASSERT_EQUAL(2, m_io_index);
+   }
 
-      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
-      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_SET_IO_TYPE)]);
+   void SetIOTypeInvalidMessageTest()
+   {
+      build_message(MSG_SET_IO_TYPE, "4 IN");
+      assert_message_fails_on_handling();
 
-      m_callback_flags[MSG_ID_IDX(MSG_SET_IO_TYPE)] = false;
-
-      strncpy(&message[1], "4 IN", MAX_MESSAGE_LENGTH); // Invalid IO index
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-
-      strncpy(&message[1], "1 XX", MAX_MESSAGE_LENGTH); // Invalid io type
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-
-      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_SET_IO_TYPE)]);
+      build_message(MSG_SET_IO_TYPE, "1 XX");
+      assert_message_fails_on_handling();
    }
 
    void ReadInputMessageTest()
    {
-      char message[MAX_MESSAGE_LENGTH] = {MSG_READ_INPUT};
-      
-      strncpy(&message[1], "0", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      build_message(MSG_READ_INPUT, "0");
+      std::string expected = std::string("  1");
+      expected[0] = MSG_REPLY;
+      expected[1] = MSG_READ_INPUT;
 
-      CPPUNIT_ASSERT_EQUAL((char)MSG_REPLY, m_reply[0]);
-      CPPUNIT_ASSERT_EQUAL((char)MSG_READ_INPUT, m_reply[1]);
-      CPPUNIT_ASSERT_EQUAL('1', m_reply[2]);
-      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_REPLY)]);
+      assert_message_passes_on_handling(false, &expected);
 
-      strncpy(&message[1], "1", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT_EQUAL((char)MSG_REPLY, m_reply[0]);
-      CPPUNIT_ASSERT_EQUAL((char)MSG_READ_INPUT, m_reply[1]);
-      CPPUNIT_ASSERT_EQUAL('0', m_reply[2]);
+      build_message(MSG_READ_INPUT, "1");
+      expected[2] = '0';
+      assert_message_passes_on_handling(false, &expected);
 
-      strncpy(&message[1], "2", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT_EQUAL((char)MSG_REPLY, m_reply[0]);
-      CPPUNIT_ASSERT_EQUAL((char)MSG_READ_INPUT, m_reply[1]);
-      CPPUNIT_ASSERT_EQUAL('0', m_reply[2]);
+      build_message(MSG_READ_INPUT, "2");
+      expected[2] = '0';
+      assert_message_passes_on_handling(false, &expected);
 
-      strncpy(&message[1], "3", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT_EQUAL((char)MSG_REPLY, m_reply[0]);
-      CPPUNIT_ASSERT_EQUAL((char)MSG_READ_INPUT, m_reply[1]);
-      CPPUNIT_ASSERT_EQUAL('1', m_reply[2]);
-
-      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
-
-      m_callback_flags[MSG_ID_IDX(MSG_REPLY)] = false;
-      strncpy(&message[1], "4", MAX_MESSAGE_LENGTH);
-      CPPUNIT_ASSERT(!m_message_handler->handle_message(message));
-      CPPUNIT_ASSERT(!m_callback_flags[MSG_ID_IDX(MSG_REPLY)]);
+      build_message(MSG_READ_INPUT, "3");
+      expected[2] = '1';
+      assert_message_passes_on_handling(false, &expected);
    }
 
    void ResetMessageTest()
    {
-      char message[MAX_MESSAGE_LENGTH] = {MSG_RESET};
-      CPPUNIT_ASSERT(m_message_handler->handle_message(message));
+      build_message(MSG_RESET, "");
+      std::string expected = std::string("  RESET");
+      expected[0] = MSG_REPLY;
+      expected[1] = MSG_RESET;
 
-      CPPUNIT_ASSERT(m_callback_flags[MSG_ID_IDX(MSG_RESET)]);
-      CPPUNIT_ASSERT_EQUAL(1, callbackSetCount());
+      assert_message_passes_on_handling(true, &expected);
    }
 };
 

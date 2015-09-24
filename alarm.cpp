@@ -111,15 +111,6 @@ bool operator==(const Alarm& lhs, const Alarm& rhs)
 	bool equal = true;
 	equal &= times_equal(&lhs.m_datetime, &rhs.m_datetime);
 
-	equal &= (lhs.m_datetime.tm_sec == rhs.m_datetime.tm_sec);
-	equal &= (lhs.m_datetime.tm_min == rhs.m_datetime.tm_min);
-	equal &= (lhs.m_datetime.tm_hour == rhs.m_datetime.tm_hour);
-	equal &= (lhs.m_datetime.tm_mday == rhs.m_datetime.tm_mday);
-	equal &= (lhs.m_datetime.tm_mon == rhs.m_datetime.tm_mon);
-	equal &= (lhs.m_datetime.tm_year == rhs.m_datetime.tm_year);
-	equal &= (lhs.m_datetime.tm_wday == rhs.m_datetime.tm_wday);
-	equal &= (lhs.m_datetime.tm_yday == rhs.m_datetime.tm_yday);
-
 	equal &= (lhs.m_repeat == rhs.m_repeat);
 	equal &= (lhs.m_repeat_interval == rhs.m_repeat_interval);
 	equal &= (lhs.m_duration == rhs.m_duration);

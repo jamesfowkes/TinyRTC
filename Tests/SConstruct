@@ -4,7 +4,7 @@ env = Environment(ENV=os.environ)
 
 library_path = env['ENV']['CODE_LIBRARY_PATH']
 cppdefines = ['UNIX_TIME_TYPE=uint64_t', 'TEST']
-cppflags = ['-Wall', '-Wextra']
+cppflags = ['-Wall', '-Wextra', '-g']
 
 for target in COMMAND_LINE_TARGETS:
 

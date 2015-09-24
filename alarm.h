@@ -53,6 +53,7 @@ public:
 
 	#ifdef TEST
 	int get_repeat() { return m_repeat; }
+	TM const * datetime() { return &m_datetime; }
 	#endif
 
 	bool to_string(ALARM_STRING * str) const;
