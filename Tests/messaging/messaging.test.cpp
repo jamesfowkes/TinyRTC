@@ -101,7 +101,7 @@ public:
 
    bool Set_trigger_callback(int io_index, char * pTriggerExpression)
    {
-      m_reply = std::string(pTriggerExpression);
+      m_trigger = std::string(pTriggerExpression);
       m_io_trigger = io_index;
       m_callback_flags[MSG_ID_IDX(MSG_SET_TRIGGER)] = true;
       return true;
@@ -149,6 +149,7 @@ public:
       m_callbacks.reply_fn = reply_callback;
 
       m_reply[0] = '\0';
+      m_trigger[0] = '\0';
 
       m_alarm.reset();
       m_alarm_id = -1;
@@ -172,7 +173,8 @@ private:
 
    TM m_time;
    std::string m_reply;
-   
+   std::string m_trigger;
+
    Alarm m_alarm;
    int m_alarm_id;
 
@@ -547,6 +549,7 @@ protected:
    {
       build_message(MSG_SET_TRIGGER, "0 1&2|A1");
       assert_message_passes_on_handling(true);
+      CPPUNIT_ASSERT_EQUAL(std::string("1&2|A1"), m_trigger);
    }
 
    void ClearTriggerMessageTest()
