@@ -230,7 +230,7 @@ private:
    void assert_message_passes_on_handling(bool message_callback_expected, std::string * expected_reply = NULL)
    {
       char id = m_message[0];
-      CPPUNIT_ASSERT(m_message_handler->handle_message(m_message));
+      CPPUNIT_ASSERT_MESSAGE(m_message, m_message_handler->handle_message(m_message));
       if (message_callback_expected)
       {
          CPPUNIT_ASSERT_EQUAL(1, callback_set_count());

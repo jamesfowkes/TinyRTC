@@ -85,7 +85,7 @@ static bool message_is_correct_rtc_format(char * message)
 
     bool valid = true;
     
-    valid &= strlen(message) == sizeof(DT_FORMAT_STRING)-1;
+    valid &= strlen(message) == sizeof(DT_FORMAT_STRING);
     valid &= message_as_time->hyphen1 == '-';
     valid &= message_as_time->hyphen2 == '-';
     valid &= message_as_time->space1 == ' ';
