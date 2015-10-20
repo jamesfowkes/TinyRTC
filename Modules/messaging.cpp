@@ -30,6 +30,12 @@
 #include "messaging.h"
 
 /*
+ * Local Application Includes
+ */
+
+#include "app.config.h"
+
+/*
  * Defines and typedefs
  */
 
@@ -59,9 +65,12 @@ static int ms_range[] = {0, 59};
  * Private Functions
  */
 
-static int * get_action_id_range()
+static int one_indexed_to_zero_indexed(int val) { return val-1; }
+//static int zero_indexed_to_one_indexed(int val) { return val+1; }
+
+static int * get_alarm_id_range()
 {
-    static int range[] = {0, 16};
+    static int range[] = {1, NUMBER_OF_ALARMS};
     return range;
 }
 
@@ -73,7 +82,7 @@ static int * get_max_repeat()
 
 static int * get_input_index_range()
 {
-    static int range[] = {0, 3};
+    static int range[] = {1, NUMBER_OF_IO};
     return range;
 }
 
@@ -356,7 +365,7 @@ bool MessageHandler::set_alarm_from_message(char * message)
 
     SET_ALARM_FORMAT_STRING * message_as_set_alarm_string = (SET_ALARM_FORMAT_STRING*)message;
 
-    if (!parse_chars_to_int(&action_id, message_as_set_alarm_string->action_id, 2, get_action_id_range())) { return false; }
+    if (!parse_chars_to_int(&action_id, message_as_set_alarm_string->action_id, 2, get_alarm_id_range())) { return false; }
     if (!parse_chars_to_int(&repeat, message_as_set_alarm_string->repeat, 2, get_max_repeat())) { return false; }
 
     if (!is_valid_interval(message_as_set_alarm_string->interval)) { return false; }
@@ -388,7 +397,7 @@ bool MessageHandler::clear_alarm_from_message(char * message)
 
     if (!m_callbacks->clr_alarm_fn) { return false; }
 
-    if (!parse_chars_to_int(&action_id, message, 2, get_action_id_range())) { return false; }
+    if (!parse_chars_to_int(&action_id, message, 2, get_alarm_id_range())) { return false; }
 
     result = m_callbacks->clr_alarm_fn(action_id);
 
@@ -451,6 +460,8 @@ bool MessageHandler::read_input_from_message(char * message)
     if (!m_callbacks->reply_fn) { return false; }
 
     if (!parse_chars_to_int(&io_index, &message[0], 1, get_input_index_range())) { return false; }
+
+    io_index = one_indexed_to_zero_indexed(io_index);
 
     new_reply(MSG_READ_INPUT);
 

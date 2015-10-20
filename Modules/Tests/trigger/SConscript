@@ -1,0 +1,5 @@
+Import('cppflags', 'cpppath', 'cppdefines', 'library_path')
+objects = [
+	Object('trigger.test.cpp', CPPFLAGS=cppflags, CPPPATH=cpppath, CPPDEFINES=cppdefines),
+]
+Return('objects')

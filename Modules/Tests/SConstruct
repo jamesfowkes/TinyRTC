@@ -8,7 +8,7 @@ cppflags = ['-Wall', '-Wextra', '-g']
 
 for target in COMMAND_LINE_TARGETS:
 
-	cpppath = ["#../", library_path, "#./" + target]
+	cpppath = ["#.", "#../", library_path, "#./" + target]
 	conscript = target+"/SConscript"
 	test_objects = SConscript(conscript, exports='cppflags cpppath cppdefines library_path')
 

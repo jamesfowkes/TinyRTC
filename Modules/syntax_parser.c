@@ -13,13 +13,28 @@
 #include <stdbool.h>
 
 /*
- * Local Application Includes
+ * Local Module Includes
  */
 
 #include "syntax_parser.h"
 #include "ast_node.h"
 
-#define MAX_FUNCTIONS (16)
+/*
+ * Local Application Includes
+ */
+
+#include "app.config.h"
+
+/*
+ * Local Variables
+ */
+
+static const int s_num_of_functions = NUMBER_OF_IO+NUMBER_OF_ALARMS;
+static BOOLFUNCTION s_functions[s_num_of_functions];
+
+/*
+ * Local Function Prototypes
+ */
 
 static ASTNode* expression(Parser * parser);
 static ASTNode* expression1(Parser * parser);
@@ -31,8 +46,6 @@ static void skipWhitespaces(Parser * parser);
 static void getNextToken(Parser * parser);
 
 static bool defaultFn(void) { return false; }
-
-static BOOLFUNCTION s_functions[MAX_FUNCTIONS];
 
 static ASTNode* expression(Parser * parser)
 {
@@ -200,10 +213,10 @@ static uint8_t GetInteger(Parser * parser)
         return 0;
     }
 
-    if (result >= MAX_FUNCTIONS)
+    if (result >= s_num_of_functions)
     {
         parser->m_success = false;
-        snprintf(parser->m_errorMessage, sizeof(parser->m_errorMessage), "Function ID %lu exceeds maximum allocation of MAX_FUNCTIONS!", result);
+        snprintf(parser->m_errorMessage, sizeof(parser->m_errorMessage), "Function ID %lu exceeds maximum allocation of s_num_of_functions!", result);
         return 0;
     }
 
@@ -283,7 +296,7 @@ static void getNextToken(Parser * parser)
 void LEP_Init(void)
 {
     uint8_t i;
-    for (i = 0; i < MAX_FUNCTIONS; ++i)
+    for (i = 0; i < s_num_of_functions; ++i)
     {
         // Ensure all functions start off pointing at the root
         s_functions[i] = defaultFn;
@@ -347,13 +360,13 @@ ASTNode * LEP_Parse(Parser * parser, const char* text)
 
 /* LEP_RegisterFunction
  * When a number is present in the input string, it represents a function from
- * 0 to MAX_FUNCTIONS-1. The application can register functions for each ID.
+ * 0 to s_num_of_functions-1. The application can register functions for each ID.
  * If no function is registered for a called function, defaultFn is called.
  */
 void LEP_RegisterFunction(uint8_t fid, BOOLFUNCTION fn)
 {
     if (!fn) {return;}
-    if (fid >= MAX_FUNCTIONS) { return; }
+    if (fid >= s_num_of_functions) { return; }
 
     s_functions[fid] = fn;
 }

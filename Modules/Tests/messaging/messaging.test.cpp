@@ -493,6 +493,12 @@ protected:
       assert_message_passes_on_handling(true);
 
       CPPUNIT_ASSERT_EQUAL(6, m_alarm_id);
+
+      clear_reply();
+      build_message(MSG_SET_ALARM, "16 01Y");
+      assert_message_passes_on_handling(true);
+
+      CPPUNIT_ASSERT_EQUAL(16, m_alarm_id);
    }
 
    void SetAlarmMessageTestInvalidActionID()
@@ -547,14 +553,21 @@ protected:
 
    void SetTriggerMessageTest()
    {
-      build_message(MSG_SET_TRIGGER, "0 1&2|A1");
+      build_message(MSG_SET_TRIGGER, "1 1&2|A1");
+      assert_message_passes_on_handling(true);
+      CPPUNIT_ASSERT_EQUAL(std::string("1&2|A1"), m_trigger);
+
+      build_message(MSG_SET_TRIGGER, "4 1&2|A1");
       assert_message_passes_on_handling(true);
       CPPUNIT_ASSERT_EQUAL(std::string("1&2|A1"), m_trigger);
    }
 
    void ClearTriggerMessageTest()
    {
-      build_message(MSG_CLEAR_TRIGGER, "0");
+      build_message(MSG_CLEAR_TRIGGER, "1");
+      assert_message_passes_on_handling(true);
+
+      build_message(MSG_CLEAR_TRIGGER, "4");
       assert_message_passes_on_handling(true);
    }
 
@@ -565,15 +578,18 @@ protected:
       CPPUNIT_ASSERT_EQUAL(OUTPUT, m_io_type);
       CPPUNIT_ASSERT_EQUAL(1, m_io_index);
 
-      build_message(MSG_SET_IO_TYPE, "2 IN");
+      build_message(MSG_SET_IO_TYPE, "4 IN");
       assert_message_passes_on_handling(true);
       CPPUNIT_ASSERT_EQUAL(INPUT, m_io_type);
-      CPPUNIT_ASSERT_EQUAL(2, m_io_index);
+      CPPUNIT_ASSERT_EQUAL(4, m_io_index);
    }
 
    void SetIOTypeInvalidMessageTest()
    {
-      build_message(MSG_SET_IO_TYPE, "4 IN");
+      build_message(MSG_SET_IO_TYPE, "0 IN");
+      assert_message_fails_on_handling();
+
+      build_message(MSG_SET_IO_TYPE, "5 IN");
       assert_message_fails_on_handling();
 
       build_message(MSG_SET_IO_TYPE, "1 XX");
@@ -582,15 +598,11 @@ protected:
 
    void ReadInputMessageTest()
    {
-      build_message(MSG_READ_INPUT, "0");
+      build_message(MSG_READ_INPUT, "1");
       std::string expected = std::string("  1");
       expected[0] = MSG_REPLY;
       expected[1] = MSG_READ_INPUT;
 
-      assert_message_passes_on_handling(false, &expected);
-
-      build_message(MSG_READ_INPUT, "1");
-      expected[2] = '0';
       assert_message_passes_on_handling(false, &expected);
 
       build_message(MSG_READ_INPUT, "2");
@@ -598,6 +610,10 @@ protected:
       assert_message_passes_on_handling(false, &expected);
 
       build_message(MSG_READ_INPUT, "3");
+      expected[2] = '0';
+      assert_message_passes_on_handling(false, &expected);
+
+      build_message(MSG_READ_INPUT, "4");
       expected[2] = '1';
       assert_message_passes_on_handling(false, &expected);
    }
